@@ -1,0 +1,10 @@
+SDK_VertexLitGeneric
+{
+	// Original shader: VertexLitTexture
+	"$basetexture"		"cable\hazardtape"
+	//"$fullbright"		1
+	"$vertexcolor"		1
+	"$nocull"			1
+	"$MinLight"			1.0
+	"$MaxLight"			1.0
+}

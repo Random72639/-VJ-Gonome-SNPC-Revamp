@@ -1,0 +1,12 @@
+SDK_VertexLitGeneric
+{
+	// Original shader: VertexLitTexture
+	"$basetexture" "models/zombie_Assassin/zombie_assassin"
+	"$bumpmap" "models/zombie_Assassin/zombie_assassin_n"
+
+	"$phong"     "1"
+	"$phongexponent"  "11"
+	"$phongboost"   "1"
+	"$phongfresnelranges"   "[1 .7 .3]"
+	"$phongwarptexture"  "models/Zombie_assassin/zassassin_iridescence"
+}

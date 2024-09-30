@@ -1,0 +1,23 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "hlrb_op4/gonome/chrome"
+	"$surfaceprop" "metal"
+	"$model" 1
+	"$phong" "1"
+	"$phongexponent" "10"
+	"$phongboost" "1"
+	"$phongfresnelranges"	"[.15 5 1]"
+	"$phongtint" "[ .70 .70 .90]"
+	"$basemapalphaphongmask" "1"
+
+	"$envmaptint" "[ .70 .70 .80]"
+	"$envmapconstrast" "10"
+	"$envmapsaturation" ".2"
+
+	// Rim lighting parameters
+	"$rimlight" "1"
+	"$rimlightexponent" "5"
+	"$rimlightboost" ".5"
+
+	"$additive" 1
+}

@@ -1,0 +1,6 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "hlrb_op4/gonome/gonome_danger2"
+
+	"$additive" 1
+}

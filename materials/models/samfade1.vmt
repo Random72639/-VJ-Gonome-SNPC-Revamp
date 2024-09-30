@@ -1,0 +1,14 @@
+"VertexlitGeneric"
+{
+	"$surfaceprop" 		"flesh"
+	"$model" 		"1"
+	"$nocull"		"1"
+	"$nodecal" 		"1"
+
+	"$baseTexture" 		"models/gonome/samfade1"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[ .2 .2 .2 ]"
+	//"$envmapmask" "Models/props_combine/combine_binocular01_mask"
+	"$selfillum" 0
+
+}

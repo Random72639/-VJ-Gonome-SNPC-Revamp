@@ -1,0 +1,6 @@
+// envmaptint_fix
+"vertexlitgeneric"
+{
+	// original shader: vertexlitmaskedenvmappedtexture
+	"$basetexture" "addon/armorpieces/mayormaccreadyhelmetNCR"
+}

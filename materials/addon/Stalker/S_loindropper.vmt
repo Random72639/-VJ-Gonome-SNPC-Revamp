@@ -1,0 +1,6 @@
+"VertexLitGeneric"
+{
+	// Original shader: VertexLitAlphaTestedTexture
+	"$basetexture" "addon/stalker/s_loindropper"
+	"$alphatest" 1
+}

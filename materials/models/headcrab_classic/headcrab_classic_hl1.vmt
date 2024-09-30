@@ -1,0 +1,10 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models\headcrab_classic\headcrab_classic_hl1"
+	"$bumpmap" "models\headcrab_classic\headcrab_classic_normal_hl1"
+	"$surfaceprop" "alienflesh"	
+	"$phong"     "1"
+	"$phongexponenttexture"	"models\headcrab_classic\headcrab_classic_exponent_hl1"
+	"$phongboost"   "5"
+	"$phongfresnelranges"   "[.5 .8 1]"
+}
