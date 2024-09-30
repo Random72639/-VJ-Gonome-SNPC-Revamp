@@ -199,32 +199,40 @@ ENT.RedTintDuration = math.random(9,13)
 ENT.DefaultFOV = 90 
 
 function ENT:CustomOnMeleeAttack_AfterChecks(hitEnt, isProp) 
-if IsValid(self) && IsValid(hitEnt) then
-if hitEnt:IsPlayer() or hitEnt:IsNPC() or hitEnt:IsNextBot() then
-ParticleEffectAttach("antlion_gib_02_floaters",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
-ParticleEffectAttach("blood_zombie_split",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
-ParticleEffectAttach("vomit_barnacle",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
-ParticleEffectAttach("blood_impact_red_01", PATTACH_ABSORIGIN_FOLLOW,hitEnt, hitEnt:EntIndex())
-end
-end
+    if IsValid(self) && IsValid(hitEnt) then
+        if hitEnt:IsPlayer() or hitEnt:IsNPC() or hitEnt:IsNextBot() then
+            ParticleEffectAttach("antlion_gib_02_floaters",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
+            ParticleEffectAttach("blood_zombie_split",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
+            ParticleEffectAttach("vomit_barnacle",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
+            ParticleEffectAttach("blood_impact_red_01", PATTACH_ABSORIGIN_FOLLOW,hitEnt, hitEnt:EntIndex())
+        end
+    end
 
-if IsValid(self) && IsValid(hitEnt) then
-if hitEnt:IsPlayer() or hitEnt:IsNPC() or hitEnt:IsNextBot() then
-local healthBonus = math.random(15,45) 
-self:SetHealth(self:Health() + healthBonus)
-end
-end 
+    if IsValid(self) && IsValid(hitEnt) then
+        if hitEnt:IsPlayer() or hitEnt:IsNPC() or hitEnt:IsNextBot() then
+            local healthBonus = math.random(15,45) 
+            self:SetHealth(self:Health() + healthBonus)
+        end
+    end
 
-if self:IsOnFire() && IsValid(self) && IsValid(hitEnt) then
-hitEnt:Ignite(math.random(2,8))
-end
+    if hitEnt.IsVJBaseSNPC_Creature and IsValid(hitEnt) then
+        self.MeleeAttackDamage = math.random(7, 12) +  hitEnt:GetMaxHealth() * math.Rand(0.15,0.35)
+        //print("Calculated Melee Damage:", self.MeleeAttackDamage)
+        else
+        self.MeleeAttackDamage = self.MeleeAttackDamage
+    end
 
-if GetConVarNumber("vj_can_gonomes_knock_player_weapons") == 1 then 
-if hitEnt:IsPlayer() && !hitEnt.Dead && IsValid(hitEnt:GetActiveWeapon()) && math.random(1, 3) == 1 then
-local wep = hitEnt:GetActiveWeapon()
-hitEnt:DropWeapon(wep)
-end
-end
+    if self:IsOnFire() && IsValid(self) && IsValid(hitEnt) then
+        hitEnt:Ignite(math.random(2,8))
+    end
+
+    if GetConVarNumber("vj_can_gonomes_knock_player_weapons") == 1 then 
+        if hitEnt:IsPlayer() && !hitEnt.Dead && IsValid(hitEnt:GetActiveWeapon()) && math.random(1, 3) == 1 then
+            local wep = hitEnt:GetActiveWeapon()
+            hitEnt:DropWeapon(wep)
+        end
+    end
+
 
     local RandomRedFadeColour = math.random(54, 124)
     if IsValid(self) and IsValid(hitEnt) then
@@ -328,10 +336,34 @@ end)
     return false
 end
 
-
+ENT.MinDmgCap = 8
+ENT.HasMinDmgCapAbility = true
+ENT.MinDmgCapTriggered = false
 function ENT:CustomOnTakeDamage_BeforeDamage(dmginfo,hitgroup)
-dmginfo:ScaleDamage(0.85)
+    local damage = dmginfo:GetDamage()
+    if damage <= self.MinDmgCap and self.HasMinDmgCapAbility and math.random(1, 2) == 1 then
+        dmginfo:SetDamage(0)
+        self.MinDmgCapTriggered = true
+        print("Minimum damage cap triggered.")
+        timer.Simple(0.1, function()
+            if IsValid(self) then 
+                self.MinDmgCapTriggered = false
+            end
+        end)
+    end
+    local RandomDamageScaling = math.Rand(0.65, 1.0) 
+    if not self.MinDmgCapTriggered then
+        dmginfo:ScaleDamage(RandomDamageScaling)
+        if dmginfo:IsBulletDamage() and 
+           (hitgroup == HITGROUP_STOMACH or hitgroup == HITGROUP_RIGHTLEG or 
+            hitgroup == HITGROUP_RIGHTARM or hitgroup == HITGROUP_LEFTLEG or 
+            hitgroup == HITGROUP_LEFTARM or hitgroup == HITGROUP_CHEST or 
+            hitgroup == HITGROUP_GUT or hitgroup == HITGROUP_GEAR) then
+            dmginfo:ScaleDamage(0.85)
+        end
+    end
 end
+
 
 function ENT:CustomOnInitialize()
 end
@@ -368,8 +400,6 @@ self.MeleeAttackDamageType = DMG_SLASH
 self.NextMeleeAttackTime = 0.5
 self.SoundTbl_MeleeAttack = {"gonome/gonome_melee1.wav","gonome/gonome_melee2.wav","gonome_pl_fallpain1","gonome/pl_burnpain"}
 self.SoundTbl_MeleeAttackMiss = {"snpc/halflife2betaxenians/betazombie/claw_miss1.wav","snpc/halflife2betaxenians/betazombie/claw_miss2.wav","snpc/halflife2betaxenians/betazombie/zombie_swing.wav"}
-self.MeleeAttackDistance = 115 
-self.MeleeAttackDamageDistance = 135
 elseif randAttack == 2 then
 self.AnimTbl_MeleeAttack = {"vjseq_attack1"}
 self.TimeUntilMeleeAttackDamage = 0.2
@@ -380,8 +410,6 @@ self.NextMeleeAttackTime = 0.5
 self.SoundTbl_MeleeAttack = {"gonome/gonome_melee1.wav","gonome/gonome_melee2.wav","gonome_pl_fallpain1","gonome/pl_burnpain"}
 self.SoundTbl_MeleeAttackMiss = {"snpc/halflife2betaxenians/betazombie/claw_miss1.wav","snpc/halflife2betaxenians/betazombie/claw_miss2.wav","snpc/halflife2betaxenians/betazombie/zombie_swing.wav"}
 self.MeleeAttackDamageType = DMG_SLASH
-self.MeleeAttackDistance = 115 
-self.MeleeAttackDamageDistance = 135
 end
 end
 
@@ -393,8 +421,7 @@ function ENT:CustomOnMeleeAttack_BeforeStartTimer(seed)
         self.MeleeAttackAnimationFaceEnemy = true
         self.MeleeAttackDamage = math.random(30, 35)
         self.HasMeleeAttackKnockBack = true
-        self.MeleeAttackDistance = 80
-        self.MeleeAttackDamageDistance = 90
+        self.MeleeAttackDamageDistance = 140
         self.MeleeAttackExtraTimers = false
         self.TimeUntilMeleeAttackDamage = 0.7
         self.MeleeAttackDistance = 125 
