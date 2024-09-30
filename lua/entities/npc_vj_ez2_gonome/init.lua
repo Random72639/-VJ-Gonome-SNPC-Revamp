@@ -111,12 +111,6 @@ ENT.LeapAttackVelocityForward = 200
 ENT.LeapAttackVelocityUp = 200
 ENT.LeapAttackVelocityRight = 0 -- How much right force should it apply?
 
-function ENT:CustomOnLeapAttackVelocityCode()
-self:SetGroundEntity(NULL)
-self:ForceMoveJump(self:CalculateProjectile("Curve", self:GetPos(), self:GetEnemy():GetPos(),math.Clamp(self:GetEnemy():GetPos():Distance(self:GetPos()),600,1100)))
-return true
-end
-
 ENT.DamageByPlayerDispositionLevel = 0
 ENT.DamageByPlayerTime = VJ_Set(2, 2)
 ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -149,6 +143,13 @@ function ENT:RangeAttackCode_GetShootPos(projectile)
     return self:CalculateProjectile("Curve", projectile:GetPos(), enemy:GetPos() + offset, rangeAdjustment)
 end
 
+function ENT:CustomOnLeapAttackVelocityCode()
+    if IsValid(self) then
+        self:SetGroundEntity(NULL)
+        self:ForceMoveJump(self:CalculateProjectile("Curve", self:GetPos(), self:GetEnemy():GetPos(),math.random(self:GetEnemy():GetPos():Distance(self:GetPos()),900,1500)))
+        return true
+    end
+end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ENT.IsMedicSNPC = true 
 ENT.AnimTbl_Medic_GiveHealth = {"vjseq_wallpound"}
@@ -185,7 +186,7 @@ function ENT:CustomOnDoKilledEnemy(ent, attacker, inflictor)
     end
 
 if GetConVarNumber("vj_can_gonomes_dance") == 0 then return false end
-self:VJ_ACT_PLAYACTIVITY("vjseq_sohappy", false, false, false, 0, {vTbl_SequenceInterruptible=false})
+self:VJ_ACT_PLAYACTIVITY("vjseq_sohappy", true, false, false)
 end
 
 ENT.IsHeavyAttack = false
@@ -496,13 +497,12 @@ function ENT:CustomOnThink()
 self:SetCollisionBounds(Vector(-25,-22,100),Vector(35,35,0))
 end
 
-
-ENT.NextZomBreakDoorT = 0 
-
 function ENT:CustomOnKilled(dmginfo, hitgroup)
+    if math.random(1,2) == 1 and IsValid(self) then 
     ParticleEffect("antlion_gib_02_gas",self:GetPos() + self:GetUp()* 10,Angle(0,0,0),nil)
     ParticleEffect("antlion_gib_02_juice",self:GetPos() + self:GetUp()* 10,Angle(0,0,0),nil)
     ParticleEffect("antlion_gib_02_floaters",self:GetPos() + self:GetUp()* 10,Angle(0,0,0),nil)
+    end
 end
 
 function ENT:CustomOnEat(status, statusInfo)
@@ -587,7 +587,6 @@ if IsValid(self) && math.random(1,4) == 1 && !self:IsBusy() && !self.Flinching &
             VJ_EmitSound(self, {"ez2_gonome/beast_berserk.wav","ez2_gonome/beast_spotted.wav","ez2_gonome/beast_alert.wav","ez2_gonome/beastsighting01.wav","ez2_gonome/beastsighting02.wav"}, 100, math.random(100, 100))
             VJ_EmitSound(self, {"call_for_help/order_smoke.wav"}, 100, math.random(100, 100))
 
-            self.CallForHelp = true 
             self.CallForHelpDistance = 500000000000
 
             local bloodeffect = EffectData()
@@ -628,11 +627,11 @@ if IsValid(self) && math.random(1,2) == 1 && !self:IsBusy() && !self.Flinching &
             ParticleEffectAttach("antlion_gib_02_floaters", PATTACH_POINT_FOLLOW, self, self:EntIndex())
 
             local ExpluseSound = VJ_PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"})
+            local ExpluseSound = VJ.PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"})
             VJ_EmitSound(self,ExpluseSound,85,100)
             VJ_EmitSound(self, {"ez2_gonome/beast_berserk.wav","ez2_gonome/beast_spotted.wav","ez2_gonome/beast_alert.wav","ez2_gonome/beastsighting01.wav","ez2_gonome/beastsighting02.wav"}, 100, math.random(100, 100))
             VJ_EmitSound(self, {"call_for_help/order_smoke.wav"}, 100, math.random(100, 100))
 
-            self.CallForHelp = true 
             self.CallForHelpDistance = 500000000000
 
             local bloodeffect = EffectData()
@@ -793,6 +792,7 @@ self:CustomOnPlyJump()
 end
 end
 
+ENT.NextZomBreakDoorT = 1
 function ENT:BreakDoorDown()
     if not IsValid(self) or not self.Alerted or not IsValid(self:GetEnemy()) or self.Flinching or not GetConVar("vj_can_gonomes_break_doors"):GetBool() then
         return
@@ -947,7 +947,7 @@ ENT.SoundTbl_CombatIdle = {"ez2_gonome/beast_growl1.wav","ez2_gonome/beast_growl
 ENT.SoundTbl_LostEnemy = {"ez2_gonome/beast_idle_hunt1.wav","ez2_gonome/beastsighting01.wav","ez2_gonome/beastsighting02.wav"}
 ENT.SoundTbl_MeleeAttackMiss = {"snpc/halflife2betaxenians/betazombie/claw_miss1.wav","snpc/halflife2betaxenians/betazombie/claw_miss2.wav","snpc/halflife2betaxenians/betazombie/zombie_swing.wav"}
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function ENT:SetUpGibesOnDeath(dmginfo, hitgroup)\
+function ENT:SetUpGibesOnDeath(dmginfo, hitgroup)
     if GetConVarNumber("vj_can_gonomes_be_gibbed") == 0 then return false end
     if math.random(1,3) == 1 and IsValid(self) then
     
@@ -1055,15 +1055,17 @@ function ENT:SetUpGibesOnDeath(dmginfo, hitgroup)\
         "models/gibs/xenians/mgib_02.mdl",
         "models/gibs/xenians/mgib_02.mdl",
     }
-
         local GibSounds = {"gib/fullbodygib-1.wav", "gib/fullbodygib-2.wav", "gib/fullbodygib-3.wav"}
         local SelectedGibSound = VJ_PICK(GibSounds)
+        --local SelectedGibSound = VJ.PICK(GibSounds)
         self:EmitSound(SelectedGibSound, 80, 100)
 
     for _, gibModel in ipairs(gibs) do
         local gibEnt = self:CreateGibEntity("obj_vj_gib", gibModel, {Pos = self:GetPos() + self:OBBCenter()})
+         end
     end
 end
+
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ENT.FootStepPitch1 = 75
 ENT.FootStepPitch2 = 100
