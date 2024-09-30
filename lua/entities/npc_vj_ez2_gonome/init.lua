@@ -657,6 +657,7 @@ if IsValid(self) && math.random(1,2) == 1 && !self:IsBusy() && !self.Flinching &
     end
 end
 
+ENT.NextLandOnGroundT = 1
 function ENT:LandOnGround()
     if self.Flinching or self.Dead or not IsValid(self) or self.MovementType == VJ_MOVETYPE_AQUATIC then 
         return false 
@@ -793,7 +794,7 @@ end
 end
 
 function ENT:BreakDoorDown()
-    if not IsValid(self) or not self.Alerted or not IsValid(self:GetEnemy()) or self.Flinching then
+    if not IsValid(self) or not self.Alerted or not IsValid(self:GetEnemy()) or self.Flinching or not GetConVar("vj_can_gonomes_break_doors"):GetBool() then
         return
     end
 
@@ -821,10 +822,12 @@ function ENT:BreakDoorDown()
                 self:SetAngles(Angle(ang.x, (self.BreakDoor:GetPos() - self:GetPos()):Angle().y, ang.z))
                 self:VJ_ACT_PLAYACTIVITY("ACT_MELEE_ATTACK2", true, false, false)
                 VJ_EmitSound(self, self.SoundTbl_CombatIdle, 70, 100)
+                -- VJ.EmitSound(self, self.SoundTbl_CombatIdle, 70, 100)
             end
 
             local door = self.BreakDoor
             local DoorBustSound = VJ_PICK({"wrhf/doorbust1", "wrhf/doorbust2"})
+            -- local DoorBustSound = VJ.PICK({"wrhf/doorbust1", "wrhf/doorbust2"})
             self.NextZomBreakDoorT = CurTime() + math.random(1, 3)
 
             if IsValid(self.BreakDoor) and door:GetClass() == "prop_door_rotating" then
@@ -839,24 +842,20 @@ function ENT:BreakDoorDown()
                 ParticleEffect("advisor_plat_break", door:GetPos(), self:GetAngles(), self)
                 door:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
                 door:SetSolid(SOLID_NONE)
-
-                -- Create a new prop to represent the broken door
                 self.BrokenDoorProp = ents.Create("prop_physics")
                 self.BrokenDoorProp:SetModel(door:GetModel())
                 self.BrokenDoorProp:SetPos(door:GetPos())
                 self.BrokenDoorProp:SetAngles(door:GetAngles())
                 self.BrokenDoorProp:Spawn()
                 self.BrokenDoorProp:Activate()
-
-                -- Set the broken door prop's skin to match the original door
                 self.BrokenDoorProp:SetSkin(door:GetSkin())
                 self.BrokenDoorProp:GetPhysicsObject():ApplyForceCenter(self:GetForward() * math.random(5000, 6000))
                 door:Remove()
 
-                timer.Simple(math.random(1.7, 2.2), function()
-                    if IsValid(self) then
-                        VJ_EmitSound(self, self.SoundTbl_Pain, 70, 100)
-                        self:VJ_ACT_PLAYACTIVITY(ACT_BIG_FLINCH, true, 1.2)
+                timer.Simple(math.Rand(1.7, 2.2), function()
+                    if IsValid(self) and not self:IsMoving() then
+                        self:PlaySoundSystem("GeneralSpeech", self.SoundTbl_Pain)
+                        self:VJ_ACT_PLAYACTIVITY(ACT_BIG_FLINCH, true, 1.2, false)
                     end
                 end)
             end
@@ -948,36 +947,44 @@ ENT.SoundTbl_CombatIdle = {"ez2_gonome/beast_growl1.wav","ez2_gonome/beast_growl
 ENT.SoundTbl_LostEnemy = {"ez2_gonome/beast_idle_hunt1.wav","ez2_gonome/beastsighting01.wav","ez2_gonome/beastsighting02.wav"}
 ENT.SoundTbl_MeleeAttackMiss = {"snpc/halflife2betaxenians/betazombie/claw_miss1.wav","snpc/halflife2betaxenians/betazombie/claw_miss2.wav","snpc/halflife2betaxenians/betazombie/zombie_swing.wav"}
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function ENT:SetUpGibesOnDeath(dmginfo, hitgroup)
-ParticleEffect("antliongib",self:GetPos(),Angle(0,0,0),nil)
-ParticleEffect("antliongib",self:GetPos(),Angle(0,0,0),nil)
+function ENT:SetUpGibesOnDeath(dmginfo, hitgroup)\
+    if GetConVarNumber("vj_can_gonomes_be_gibbed") == 0 then return false end
+    if math.random(1,3) == 1 and IsValid(self) then
+    
+        print("We gib")
 
-self.HasDeathRagdoll = false
-self.HasDeathSounds = false
-self.HasPainSounds = false
-self.HasDeathAnimation = false
+        -- Gib particles
 
-local bloodeffect = EffectData()
-bloodeffect:SetOrigin(self:GetPos()+self:OBBCenter())
-bloodeffect:SetColor(VJ_Color2Byte(Color(255,221,35)))
-bloodeffect:SetScale(150)
-util.Effect("VJ_Blood1",bloodeffect)		
-local bloodspray = EffectData()
-bloodspray:SetOrigin(self:GetPos()+self:OBBCenter())
-bloodspray:SetScale(5)
-bloodspray:SetFlags(3)
-bloodspray:SetColor(0)
-util.Effect("bloodspray",bloodspray)
-util.Effect("bloodspray",bloodspray)
+        ParticleEffect("antliongib",self:GetPos(),Angle(0,0,0),nil)
+        ParticleEffect("antliongib",self:GetPos(),Angle(0,0,0),nil)
 
-local ExplosionShake = DamageInfo()
-ExplosionShake:SetDamage(math.random(3,8))
-ExplosionShake:SetDamageType(DMG_CRUSH) 
-ExplosionShake:SetAttacker(game.GetWorld())
-ExplosionShake:SetInflictor(game.GetWorld())
-ExplosionShake:SetDamageForce(Vector(0, 0, 0)) 
-util.ScreenShake(self:GetPos(), 10, 5, 1, 1000) 
-util.VJ_SphereDamage(self,self,self:GetPos(),math.random(120,340),math.random(5,12),DMG_NERVEGAS,true,true)
+        self.HasDeathRagdoll = false
+        self.HasDeathSounds = false
+        self.HasPainSounds = false
+        self.HasDeathAnimation = false
+        self.HasBeenGibbedOnDeath = true 
+
+        local bloodeffect = EffectData()
+        bloodeffect:SetOrigin(self:GetPos() + self:OBBCenter())
+        bloodeffect:SetColor(VJ_Color2Byte(Color(math.random(210,255), math.random(205,245), math.random(27,42))))
+        bloodeffect:SetScale(math.random(120, 185))
+        util.Effect("VJ_Blood1", bloodeffect)
+        local bloodspray = EffectData()
+        bloodspray:SetOrigin(self:GetPos() + self:OBBCenter())
+        bloodspray:SetScale(math.random(7,12)) 
+        bloodspray:SetFlags(3)
+        bloodspray:SetColor(0)
+
+        util.Effect("bloodspray", bloodspray)
+        util.Effect("bloodspray", bloodspray) 
+        local ExplosionShake = DamageInfo()
+        ExplosionShake:SetDamage(math.random(5,10)) 
+        ExplosionShake:SetDamageType(DMG_CRUSH)
+        ExplosionShake:SetAttacker(game.GetWorld())
+        ExplosionShake:SetInflictor(game.GetWorld())
+        ExplosionShake:SetDamageForce(Vector(0, 0, 0)) 
+        util.ScreenShake(self:GetPos(), 20, 8, 1.5, 1500) 
+        util.VJ_SphereDamage(self, self, self:GetPos(), math.random(150, 400), math.random(10, 20), DMG_NERVEGAS, true, true) 
 
     local gibs = {
         "models/gibs/humans/heart_gib.mdl",
@@ -1058,10 +1065,12 @@ util.VJ_SphereDamage(self,self,self:GetPos(),math.random(120,340),math.random(5,
     end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-ENT.FootStepPitch1 = 100
+ENT.FootStepPitch1 = 75
 ENT.FootStepPitch2 = 100
-ENT.BreathSoundPitch1 = 100
+ENT.BreathSoundPitch1 = 75
 ENT.BreathSoundPitch2 = 100
+ENT.GeneralSoundPitch1 = 75
+ENT.GeneralSoundPitch2 = 100
 ENT.IdleSoundPitch1 = "UseGeneralPitch"
 ENT.IdleSoundPitch2 = "UseGeneralPitch"
 ENT.CombatIdleSoundPitch1 = "UseGeneralPitch"

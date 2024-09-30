@@ -14,7 +14,7 @@ local VJExists = file.Exists("lua/autorun/vj_base_autorun.lua","GAME")
 if VJExists == true then
 	include('autorun/vj_controls.lua')
 
-        local vCat = "Zombies + Enemy Aliens" 
+    local vCat = "Zombies + Enemy Aliens" 
         // -- Weapons -- \\
         VJ.AddNPC("Gonome","npc_vj_hale_life_gonome",vCat)
         VJ.AddNPC("Gonome Ver2","npc_vj_hale_life_gonome_2",vCat)
@@ -54,6 +54,7 @@ if VJExists == true then
 	AddConvars["vj_can_gonomes_dance"] = 0 -- Can SNPCs dance?
 	AddConvars["vj_can_gonomes_have_worldshake"] = 1 -- Do Gonome's have worldshake?
 	AddConvars["vj_can_gonomes_break_doors"] = 1 -- Do Gonome's break doors?
+	AddConvars["vj_can_gonomes_be_gibbed"] = 1 -- Can Gonome's be gibbed? 
 	for k, v in pairs(AddConvars) do
 		if !ConVarExists( k ) then CreateConVar( k, v, {FCVAR_ARCHIVE} ) end
 	end
@@ -67,7 +68,10 @@ if VJExists == true then
 		end		
 
 		Panel:AddControl( "Label", {Text = "Notice: Only admins can change this settings."})	
-		Panel:AddControl("Button",{Text = "#vjbase.menu.general.reset.everything", Command = " vj_can_gonomes_break_doors 0\n vj_can_gonomes_dance 0 \n vj_can_gonomes_have_worldshake 0 \n vj_can_gonomes_screen_fx 0 \n vj_can_gonomes_regain_hp 0"})
+		Panel:AddControl("Button",{Text = "#vjbase.menu.general.reset.everything", Command = "vj_can_gonomes_be_gibbed 0\n  vj_can_gonomes_break_doors 0\n vj_can_gonomes_dance 0 \n vj_can_gonomes_have_worldshake 0 \n vj_can_gonomes_screen_fx 0 \n vj_can_gonomes_regain_hp 0"})
+
+		Panel:AddControl("Checkbox", {Label = "Can Gonome's Be Gibbed?", Command = "vj_can_gonomes_be_gibbed"})
+		Panel:ControlHelp("Allows the Gonome's to be gibbed under certain circumstances.")
 
 		Panel:AddControl("Checkbox", {Label = "Can Gonome's Break Doors?", Command = "vj_can_gonomes_break_doors"})
 		Panel:ControlHelp("Allows the Gonome's to break doors.")
