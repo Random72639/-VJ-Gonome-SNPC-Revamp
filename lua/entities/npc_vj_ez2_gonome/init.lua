@@ -145,6 +145,7 @@ end
 
 function ENT:CustomOnLeapAttackVelocityCode()
     if IsValid(self) then
+        self:RemoveAllGestures()
         self:SetGroundEntity(NULL)
         self:ForceMoveJump(self:CalculateProjectile("Curve", self:GetPos(), self:GetEnemy():GetPos(),math.random(self:GetEnemy():GetPos():Distance(self:GetPos()),900,1500)))
         return true
@@ -333,11 +334,19 @@ dmginfo:ScaleDamage(0.85)
 end
 
 function ENT:CustomOnInitialize()
-if GetConVarNumber("vj_can_gonomes_have_worldshake") == 1 then
-self.HasWorldShakeOnMove = false
-end
 end
 
+ENT.ExtinguishAbility = false
+function ENT:CustomOnPreInitialize()
+    if not IsValid(self) then return end 
+    if GetConVarNumber("vj_can_gonomes_have_worldshake") == 1 then
+        self.HasWorldShakeOnMove = false
+    end
+    if math.random(1,3) == 1 then
+        self.ExtinguishAbility = true
+        print("Extinguish self ability")
+    end
+end
 
 function ENT:MeleeAttackKnockbackVelocity(hitEnt)
 return self:GetForward()*math.random(170,240) + self:GetUp()*math.random(50,75)
@@ -494,14 +503,14 @@ ply:ChatPrint("JUMP = Press Space Bar")
 end
 
 function ENT:CustomOnThink()
-self:SetCollisionBounds(Vector(-25,-22,100),Vector(35,35,0))
+//self:SetCollisionBounds(Vector(-25,-22,100),Vector(35,35,0))
 end
 
 function ENT:CustomOnKilled(dmginfo, hitgroup)
     if math.random(1,2) == 1 and IsValid(self) then 
-    ParticleEffect("antlion_gib_02_gas",self:GetPos() + self:GetUp()* 10,Angle(0,0,0),nil)
-    ParticleEffect("antlion_gib_02_juice",self:GetPos() + self:GetUp()* 10,Angle(0,0,0),nil)
-    ParticleEffect("antlion_gib_02_floaters",self:GetPos() + self:GetUp()* 10,Angle(0,0,0),nil)
+        ParticleEffect("antlion_gib_02_gas",self:GetPos() + self:GetUp()* 10,Angle(0,0,0),nil)
+        ParticleEffect("antlion_gib_02_juice",self:GetPos() + self:GetUp()* 10,Angle(0,0,0),nil)
+        ParticleEffect("antlion_gib_02_floaters",self:GetPos() + self:GetUp()* 10,Angle(0,0,0),nil)
     end
 end
 
@@ -627,7 +636,7 @@ if IsValid(self) && math.random(1,2) == 1 && !self:IsBusy() && !self.Flinching &
             ParticleEffectAttach("antlion_gib_02_floaters", PATTACH_POINT_FOLLOW, self, self:EntIndex())
 
             local ExpluseSound = VJ_PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"})
-            local ExpluseSound = VJ.PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"})
+            --local ExpluseSound = VJ.PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"})
             VJ_EmitSound(self,ExpluseSound,85,100)
             VJ_EmitSound(self, {"ez2_gonome/beast_berserk.wav","ez2_gonome/beast_spotted.wav","ez2_gonome/beast_alert.wav","ez2_gonome/beastsighting01.wav","ez2_gonome/beastsighting02.wav"}, 100, math.random(100, 100))
             VJ_EmitSound(self, {"call_for_help/order_smoke.wav"}, 100, math.random(100, 100))
@@ -658,7 +667,7 @@ end
 
 ENT.NextLandOnGroundT = 1
 function ENT:LandOnGround()
-    if self.Flinching or self.Dead or not IsValid(self) or self.MovementType == VJ_MOVETYPE_AQUATIC then 
+    if self.Flinching or self.Dead or not IsValid(self) then 
         return false 
     end
 
@@ -682,26 +691,81 @@ function ENT:LandOnGround()
         if not onGround then
             if self.EmplacedOnTheGround then
                 self.EmplacedOnTheGround = false
+                self:SetGroundEntity(NULL)
                 if CurTime() > (self.NextLandT or 0) then
                 end
             end
         elseif onGround then
             if not self.EmplacedOnTheGround or self.LeapAttacking then
                 self.EmplacedOnTheGround = true
-                if CurTime() > (self.NextLandOnGroundT or 0) then
-                    self.NextLandOnGroundT = CurTime() + math.random(1.5, 2.5)
-                    self:VJ_ACT_PLAYACTIVITY(ACT_LAND, true, 1, false, false)
-                    VJ_EmitSound(self, "npc/antlion/land1.wav", 75, 100)
+                
+                if CurTime() > (self.NextLandOnGroundT or 0) and self.EmplacedOnTheGround then
+                    self:SetGroundEntity(self)
+                    self.NextLandOnGroundT = CurTime() + math.random(0.1, 1.25)
+                    local HumanimalLandAnim = VJ_PICK({"jump_glide_end_new"}) --VJ.PICK({"jump_glide_end_new","jump_glide_end"})
+                    self:VJ_ACT_PLAYACTIVITY(HumanimalLandAnim, true, false, false )
                 end
             end
         end
     end
 end
 
+ENT.NextLandCheck = 0
+function ENT:DetectLandingSeq()
+        local landingSequence = {"jump_glide_end_new"}
+        if IsValid(self) and CurTime() >= self.NextLandCheck then 
+            local currentSequence = self:GetSequenceName(self:GetSequence())
+            if currentSequence == landingSequence or self:GetActivity() == ACT_LAND then
+                VJ_EmitSound(self,"npc/antlion/land1.wav", 70,100)
+                --VJ.EmitSound(self,"npc/antlion/land1.wav", 70,100)
+             end
+        self.NextLandCheck = CurTime() + 0.625
+    end
+end
+
+ENT.IsCurrentlyOnFire = false
+function ENT:CheckFireStatus()
+    if IsValid(self) then
+        if self:IsOnFire() then
+            self.HasHealthRegeneration = false
+            self.IsCurrentlyOnFire = true
+        else
+            self.HasHealthRegeneration = true
+            self.IsCurrentlyOnFire = false
+        end
+    end
+end
+
+ENT.NextFireCheckT = 0
+function ENT:CheckFireStatus()
+    if not IsValid(self) or self.Dead or self:IsBusy() or not self.ExtinguishAbility then
+        return
+    end
+    if self.NextFireCheckT < CurTime() then
+        if self:IsOnFire() then
+            self:ExtinguishFire()
+            self:PlaySoundSystem("Pain")
+        end
+        self.NextFireCheckT = CurTime() + math.random(5,10) 
+    end
+end
+
+function ENT:ExtinguishFire()
+    self:StopMoving()
+    self:VJ_ACT_PLAYACTIVITY(ACT_BIG_FLINCH, true, false, false)
+    timer.Simple(math.Rand(0.7,1.2), function()
+        if IsValid(self) then
+            self:Extinguish()
+        end
+    end)
+end
+
 function ENT:CustomOnThink_AIEnabled()
-self:LandOnGround()
-self:BreakDoorDown()
-self:SetCollisionBounds(Vector(-25,-22,100),Vector(35,35,0))
+    self:DetectLandingSeq()
+    self:LandOnGround()
+    self:BreakDoorDown()
+    self:CheckFireStatus()
+    self:SetCollisionBounds(Vector(-25,-22,100),Vector(35,35,0))
     if !IsValid(self) or self:IsOnFire() or self.MovementType == VJ_MOVETYPE_STATIONARY or self.Medic_Status or self.Flinching or self.IsFollowing == true or self:GetState() == VJ_STATE_ONLY_ANIMATION or self.SelfIsFlipped == true or self.IsDrowning == true or self.VJTags[VJ_TAG_EATING] then 
         return 
     end
@@ -715,7 +779,7 @@ self:SetCollisionBounds(Vector(-25,-22,100),Vector(35,35,0))
 
                 if MedicalItemDist < math.random(10,25) then
                     self:FaceCertainEntity(v)
-                    self:VJ_ACT_PLAYACTIVITY("vjseq_victoryeat1",true,false,true)
+                    self:VJ_ACT_PLAYACTIVITY("vjseq_victoryeat1",true,false,false)
 
                     
                     timer.Simple(math.random(4, 4.5), function()
@@ -792,7 +856,7 @@ self:CustomOnPlyJump()
 end
 end
 
-ENT.NextZomBreakDoorT = 1
+ENT.NextZomBreakDoorT = 0
 function ENT:BreakDoorDown()
     if not IsValid(self) or not self.Alerted or not IsValid(self:GetEnemy()) or self.Flinching or not GetConVar("vj_can_gonomes_break_doors"):GetBool() then
         return
@@ -817,10 +881,10 @@ function ENT:BreakDoorDown()
                 return
             end
 
-            if self:GetActivity() ~= ACT_MELEE_ATTACK2 then
+            if self:GetActivity() ~= ACT_MELEE_ATTACK1 then
                 local ang = self:GetAngles()
                 self:SetAngles(Angle(ang.x, (self.BreakDoor:GetPos() - self:GetPos()):Angle().y, ang.z))
-                self:VJ_ACT_PLAYACTIVITY("ACT_MELEE_ATTACK2", true, false, false)
+                self:VJ_ACT_PLAYACTIVITY("ACT_MELEE_ATTACK1", true, false, false)
                 VJ_EmitSound(self, self.SoundTbl_CombatIdle, 70, 100)
                 -- VJ.EmitSound(self, self.SoundTbl_CombatIdle, 70, 100)
             end
@@ -849,13 +913,13 @@ function ENT:BreakDoorDown()
                 self.BrokenDoorProp:Spawn()
                 self.BrokenDoorProp:Activate()
                 self.BrokenDoorProp:SetSkin(door:GetSkin())
-                self.BrokenDoorProp:GetPhysicsObject():ApplyForceCenter(self:GetForward() * math.random(5000, 6000))
+                self.BrokenDoorProp:GetPhysicsObject():ApplyForceCenter(self:GetForward() * 25000)
                 door:Remove()
 
                 timer.Simple(math.Rand(1.7, 2.2), function()
                     if IsValid(self) and not self:IsMoving() then
-                        self:PlaySoundSystem("GeneralSpeech", self.SoundTbl_Pain)
-                        self:VJ_ACT_PLAYACTIVITY(ACT_BIG_FLINCH, true, 1.2, false)
+                        self:PlaySoundSystem("Pain")
+                        self:VJ_ACT_PLAYACTIVITY(ACT_BIG_FLINCH, true, false, false)
                     end
                 end)
             end
