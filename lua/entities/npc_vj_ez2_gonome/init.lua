@@ -455,7 +455,8 @@ end
 ENT.HasStompAttack = true
 function ENT:CustomOnMeleeAttack_BeforeStartTimer(seed)
     -- Ground stomp attack
-    if math.random(1, 4) == 1 and not self.VJ_PlayingSequence and not self.PlayingAttackAnimation and self:IsOnGround() and not self.Flinching and IsValid(self) and not self.RangeAttacking and not self.PlayingAttackAnimation and self.HasStompAttack and IsValid(self:GetEnemy()) then
+    if not IsValid(self) or self.VJ_IsBeingControlled then return false end  
+    if math.random(1, 4) == 1 and not self.VJ_PlayingSequence and not self.PlayingAttackAnimation and self:IsOnGround() and not self.Flinching and not self.RangeAttacking and not self.PlayingAttackAnimation and self.HasStompAttack and IsValid(self:GetEnemy()) then
         self.MeleeAttackAnimationAllowOtherTasks = false
         self.MeleeAttackAnimationFaceEnemy = true
         self.MeleeAttackDamage = math.random(30, 35)
