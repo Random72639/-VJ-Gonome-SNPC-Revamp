@@ -7,7 +7,7 @@ include('shared.lua')
 -----------------------------------------------*/
 ENT.Model = {"models/ez2/npc/gonome.mdl"} -- The game will pick a random model from the table when the SNPC is spawned | Add as many as you want
 ENT.StartHealth = 650
-ENT.HullType = HULL_WIDE_HUMAN
+ENT.HullType = HULL_HUMAN
 ENT.VJ_NPC_Class = {"CLASS_ZOMBIE"} -- NPCs with the same class with be allied to each other
 ENT.HasDeathRagdoll = true -- If set to false, it will not spawn the regular ragdoll of the SNPC
 ENT.HasDeathAnimation = false
@@ -117,7 +117,7 @@ ENT.DamageByPlayerTime = VJ_Set(2, 2)
 	-- ====== Flinching Code ====== --
 ENT.CanFlinch = 1 -- 1 = Don't flinch | 1 = Flinch at any damage | 2 = Flinch only from certain damages
 ENT.FlinchChance = 3 -- Chance of it flinching from 1 to x | 1 will make it always flinch
-ENT.AnimTbl_Flinch = {"Flinch","Big_Flinch"} -- If it uses normal based animation, use this
+ENT.AnimTbl_Flinch = {"vjseq_flinch","vjseq_big_flinch"} -- If it uses normal based animation, use this
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ENT.CallForHelp = true -- Does the SNPC call for help?
 ENT.CallForHelpDistance = 4000 -- -- How far away the SNPC's call for help goes | Counted in World 
@@ -153,27 +153,63 @@ function ENT:CustomOnLeapAttackVelocityCode()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ENT.IsMedicSNPC = true 
-ENT.AnimTbl_Medic_GiveHealth = {"vjseq_wallpound"}
+ENT.AnimTbl_Medic_GiveHealth = {ACT_MELEE_ATTACK1}
 ENT.Medic_TimeUntilHeal = 2
 ENT.Medic_CheckDistance = 12000
-ENT.Medic_HealthAmount = math.random(10,80)
+ENT.Medic_HealthAmount = math.random(10,120)
 ENT.Medic_HealDistance = math.random(50,100)
 ENT.Medic_NextHealTime = VJ_Set(10, 15)
 ENT.Medic_DisableAnimation = false
 ENT.Medic_CanBeHealed = true 
 ENT.Medic_SpawnPropOnHealModel = "models/weapons/w_bugbait.mdl" 
-
 ENT.DisableFootStepSoundTimer = false
+
+ENT.ChestParticleAtt = {"chest"}
+function ENT:CustomOnMedic_BeforeHeal(ent)
+    if not IsValid(self) then return false end
+    local attID = self:LookupAttachment(self.ChestParticleAtt[1]) 
+    local ExpulseSound = VJ_PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"}) -- VJ.PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"})
+    VJ_EmitSound(self, ExpulseSound, 75, 100)
+    if attID and attID > 0 then
+        ParticleEffectAttach("antlion_gib_02_floaters", PATTACH_POINT_FOLLOW, self, attID)
+        ParticleEffectAttach("blood_impact_red_01", PATTACH_POINT_FOLLOW, self, attID)
+    else
+        ParticleEffectAttach("antlion_gib_02_floaters", PATTACH_POINT_FOLLOW, self, self:EntIndex())
+        ParticleEffectAttach("blood_impact_red_01", PATTACH_POINT_FOLLOW, self, self:EntIndex())
+        if IsValid(ent) then
+        ParticleEffectAttach("antlion_gib_02_floaters", PATTACH_POINT_FOLLOW, ent, ent:EntIndex())
+        ParticleEffectAttach("blood_impact_red_01", PATTACH_POINT_FOLLOW, ent, ent:EntIndex())
+        end
+    end
+    return true
+end
+
+function ENT:CustomOnMedic_OnHeal(ent)
+    if not IsValid(self) then return false end 
+    local attID = self:LookupAttachment(self.ChestParticleAtt[1]) 
+    local ExpulseSound = VJ_PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"}) -- VJ.PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"})
+    VJ_EmitSound(self, ExpulseSound, 75, 100)
+    if attID and attID > 0 then
+        ParticleEffectAttach("antlion_gib_02_floaters", PATTACH_POINT_FOLLOW, self, attID)
+        ParticleEffectAttach("blood_impact_red_01", PATTACH_POINT_FOLLOW, self, attID)
+    else
+        ParticleEffectAttach("antlion_gib_02_floaters", PATTACH_POINT_FOLLOW, self, self:EntIndex())
+        ParticleEffectAttach("blood_impact_red_01", PATTACH_POINT_FOLLOW, self, self:EntIndex())
+        if IsValid(ent) then
+        ParticleEffectAttach("antlion_gib_02_floaters", PATTACH_POINT_FOLLOW, ent, ent:EntIndex())
+        ParticleEffectAttach("blood_impact_red_01", PATTACH_POINT_FOLLOW, ent, ent:EntIndex())
+        end
+    end
+    return true
+end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnDoKilledEnemy(ent, attacker, inflictor)
-
     if attacker == self && IsValid(self) then
         local healthBonus = math.random(50,125) 
         self:SetHealth(self:Health() + healthBonus)
-
         local bloodeffect = EffectData()
         bloodeffect:SetOrigin(ent:GetPos() + ent:OBBCenter())
-        bloodeffect:SetColor(VJ_Color2Byte(Color(130, 19, 10)))
+        bloodeffect:SetColor(VJ_Color2Byte(Color(math.random(90,145), math.random(10,25), math.random(5,25))))
         bloodeffect:SetScale(math.random(40,100))
         util.Effect("VJ_Blood1", bloodeffect)
         local bloodspray = EffectData()
@@ -183,11 +219,9 @@ function ENT:CustomOnDoKilledEnemy(ent, attacker, inflictor)
         bloodspray:SetColor(0)
         util.Effect("bloodspray", bloodspray)
         util.Effect("bloodspray", bloodspray)
-
     end
-
-if GetConVarNumber("vj_can_gonomes_dance") == 0 then return false end
-self:VJ_ACT_PLAYACTIVITY("vjseq_sohappy", true, false, false)
+    if GetConVarNumber("vj_can_gonomes_dance") == 0 then return false end
+    self:VJ_ACT_PLAYACTIVITY("vjseq_sohappy", true, false, false)
 end
 
 ENT.IsHeavyAttack = false
@@ -201,6 +235,7 @@ ENT.DefaultFOV = 90
 function ENT:CustomOnMeleeAttack_AfterChecks(hitEnt, isProp) 
     if IsValid(self) && IsValid(hitEnt) then
         if hitEnt:IsPlayer() or hitEnt:IsNPC() or hitEnt:IsNextBot() then
+            -- Particles that emit from hitEnt 
             ParticleEffectAttach("antlion_gib_02_floaters",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
             ParticleEffectAttach("blood_zombie_split",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
             ParticleEffectAttach("vomit_barnacle",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
@@ -208,6 +243,7 @@ function ENT:CustomOnMeleeAttack_AfterChecks(hitEnt, isProp)
         end
     end
 
+    -- Gain health from enemy when hit
     if IsValid(self) && IsValid(hitEnt) then
         if hitEnt:IsPlayer() or hitEnt:IsNPC() or hitEnt:IsNextBot() then
             local healthBonus = math.random(15,45) 
@@ -215,6 +251,7 @@ function ENT:CustomOnMeleeAttack_AfterChecks(hitEnt, isProp)
         end
     end
 
+    -- Buffed melee damage against VJ Creatures
     if hitEnt.IsVJBaseSNPC_Creature and IsValid(hitEnt) then
         self.MeleeAttackDamage = math.random(7, 12) +  hitEnt:GetMaxHealth() * math.Rand(0.15,0.35)
         //print("Calculated Melee Damage:", self.MeleeAttackDamage)
@@ -222,6 +259,7 @@ function ENT:CustomOnMeleeAttack_AfterChecks(hitEnt, isProp)
         self.MeleeAttackDamage = self.MeleeAttackDamage
     end
 
+    -- Set hitEnt on fire when self is on fire. 
     if self:IsOnFire() && IsValid(self) && IsValid(hitEnt) then
         hitEnt:Ignite(math.random(2,8))
     end
@@ -371,6 +409,7 @@ end
 ENT.ExtinguishAbility = false
 function ENT:CustomOnPreInitialize()
     if not IsValid(self) then return end 
+    self:SetCollisionBounds(Vector(-10, -10, 0), Vector(10, 10, 70))
     if GetConVarNumber("vj_can_gonomes_have_worldshake") == 1 then
         self.HasWorldShakeOnMove = false
     end
@@ -428,7 +467,7 @@ function ENT:CustomOnMeleeAttack_BeforeStartTimer(seed)
         self.MeleeAttackDamageDistance = 155
         self.SoundTbl_MeleeAttackMiss = {"wrhf/ground_thud/pound1.wav", "wrhf/ground_thud/pound2.wav", "wrhf/ground_thud/pound3.wav", "wrhf/ground_thud/pound4.wav"}
         self.SoundTbl_MeleeAttack = {"wrhf/ground_thud/pound1.wav", "wrhf/ground_thud/pound2.wav", "wrhf/ground_thud/pound3.wav", "wrhf/ground_thud/pound4.wav"}
-        self.AnimTbl_MeleeAttack = {"Gonome_stomp_gib"}
+        self.AnimTbl_MeleeAttack = {"vjseq_gonome_stomp_gib"}
         self.VJ_PlayingSequence = true
         self.VJ_PlayingInterruptSequence = false
         self.PlayingAttackAnimation = true
@@ -492,22 +531,22 @@ end
 
 
 function ENT:CustomOnIdleDialogueAnswer(ent) 
-if self.VJ_IsBeingControlled or self.VJTags[VJ_TAG_EATING] then return false end
+if self.VJ_IsBeingControlled or self.VJTags[VJ_TAG_EATING] then return end
 if IsValid(self) && !self:IsBusy() && !self.VJTags[VJ_TAG_EATING] && !self.Flinching && ent:Visible(self) then
 local RandResponseAnim = math.random(1,2)
 if RandResponseAnim == 1 then
-self:VJ_ACT_PLAYACTIVITY("big_Flinch",true,false,false)
+self:VJ_ACT_PLAYACTIVITY("vjseq_big_flinch",true,false,false)
 end
 return true
 end
 end
 
 function ENT:CustomOnIdleDialogue(ent, canAnswer)
-if self.VJ_IsBeingControlled or self.VJTags[VJ_TAG_EATING] then return false end
+if self.VJ_IsBeingControlled or self.VJTags[VJ_TAG_EATING] then return end
 if IsValid(self) && !self:IsBusy() && !self.VJTags[VJ_TAG_EATING] && !self.Flinching && ent:Visible(self) then
 local RandResponseAnim = math.random(1,2)
 if RandResponseAnim == 1 then
-self:VJ_ACT_PLAYACTIVITY("big_Flinch",true,false,false)
+self:VJ_ACT_PLAYACTIVITY("vjseq_big_flinch",true,false,false)
 end
 return true
 end
@@ -530,7 +569,6 @@ ply:ChatPrint("JUMP = Press Space Bar")
 end
 
 function ENT:CustomOnThink()
-//self:SetCollisionBounds(Vector(-25,-22,100),Vector(35,35,0))
 end
 
 function ENT:CustomOnKilled(dmginfo, hitgroup)
@@ -1031,12 +1069,15 @@ ENT.SoundTbl_BeforeMeleeAttack = {"ez2_gonome/beast_attack1.wav"}
 ENT.SoundTbl_FootStep = {"ez2_gonome/beast_walk_foot1.wav","ez2_gonome/beast_walk_foot2.wav","ez2_gonome/beast_walk_foot3.wav","ez2_gonome/beast_walk_foot4.wav","ez2_gonome/beast_run_foot1.wav","ez2_gonome/beast_run_foot2.wav","ez2_gonome/beast_run_foot3.wav","ez2_gonome/beast_run_foot4.wav"}
 ENT.SoundTbl_Idle = {"ez2_gonome/beast_growl1.wav","ez2_gonome/beast_growl2.wav","ez2_gonome/beast_growl3.wav","ez2_gonome/beast_distant_growl1.wav","ez2_gonome/beast_distant_growl2.wav","ez2_gonome/beast_distant_growl3.wav","ez2_gonome/beast_idle1.wav","ez2_gonome/beast_idle2.wav","ez2_gonome/beast_idle3.wav","ez2_gonome/beast_idle4.wav","ez2_gonome/beast_growl1.wav"}
 ENT.SoundTbl_MeleeAttack = {"ez2_gonome/beast_claw_strike1.wav","ez2_gonome/beast_claw_strike2.wav","ez2_gonome/beast_claw_strike3.wav"}
+ENT.SoundTbl_MeleeAttackExtra = {"npc/zombie/claw_strike1.wav","npc/zombie/claw_strike2.wav","npc/zombie/claw_strike3.wav"}
+ENT.SoundTbl_MeleeAttackMiss = {"npc/zombie/claw_miss1.wav","npc/zombie/claw_miss2.wav"}
 ENT.SoundTbl_Pain = {"ez2_gonome/beast_pain1.wav","ez2_gonome/beast_pain2.wav"}
 ENT.SoundTbl_Death = {"ez2_gonome/beast_die1_v2.wav","ez2_gonome/beast_die2_v2.wav"}
 ENT.SoundTbl_MoveOutOfPlayersWay = {"ez2_gonome/beast_growl1.wav","ez2_gonome/beast_growl2.wav","ez2_gonome/beast_growl3.wav"}
 ENT.SoundTbl_CombatIdle = {"ez2_gonome/beast_growl1.wav","ez2_gonome/beast_growl2.wav","ez2_gonome/beast_growl3.wav","ez2_gonome/beast_idle_hunt1.wav","ez2_gonome/beast_growl2.wav"}
 ENT.SoundTbl_LostEnemy = {"ez2_gonome/beast_idle_hunt1.wav","ez2_gonome/beastsighting01.wav","ez2_gonome/beastsighting02.wav"}
-ENT.SoundTbl_MeleeAttackMiss = {"snpc/halflife2betaxenians/betazombie/claw_miss1.wav","snpc/halflife2betaxenians/betazombie/claw_miss2.wav","snpc/halflife2betaxenians/betazombie/zombie_swing.wav"}
+ENT.SoundTbl_MedicReceiveHeal = {"ez2_gonome/beast_growl1.wav","ez2_gonome/beast_growl2.wav","ez2_gonome/beast_growl3.wav"}
+ENT.SoundTbl_MedicBeforeHeal = {"ez2_gonome/beast_growl1.wav","ez2_gonome/beast_growl2.wav","ez2_gonome/beast_growl3.wav"}
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SetUpGibesOnDeath(dmginfo, hitgroup)
     if GetConVarNumber("vj_can_gonomes_be_gibbed") == 0 then return false end
