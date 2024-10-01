@@ -454,8 +454,8 @@ end
 
 ENT.HasStompAttack = true
 function ENT:CustomOnMeleeAttack_BeforeStartTimer(seed)
-    -- Ground Thud Effect -- 
-    if math.random(1, 3) == 1 and !self.VJ_PlayingSequence and !self.PlayingAttackAnimation and self:IsOnGround() and not self.Flinching and IsValid(self) and not self.RangeAttacking and not self.PlayingAttackAnimation and self.HasStompAttack then
+    -- Ground stomp attack
+    if math.random(1, 4) == 1 and not self.VJ_PlayingSequence and not self.PlayingAttackAnimation and self:IsOnGround() and not self.Flinching and IsValid(self) and not self.RangeAttacking and not self.PlayingAttackAnimation and self.HasStompAttack and IsValid(self:GetEnemy()) then
         self.MeleeAttackAnimationAllowOtherTasks = false
         self.MeleeAttackAnimationFaceEnemy = true
         self.MeleeAttackDamage = math.random(30, 35)
@@ -463,32 +463,26 @@ function ENT:CustomOnMeleeAttack_BeforeStartTimer(seed)
         self.MeleeAttackDamageDistance = 140
         self.MeleeAttackExtraTimers = false
         self.TimeUntilMeleeAttackDamage = 0.7
-        self.MeleeAttackDistance = 125 
+        self.MeleeAttackDistance = 125
         self.MeleeAttackDamageDistance = 155
         self.SoundTbl_MeleeAttackMiss = {"wrhf/ground_thud/pound1.wav", "wrhf/ground_thud/pound2.wav", "wrhf/ground_thud/pound3.wav", "wrhf/ground_thud/pound4.wav"}
         self.SoundTbl_MeleeAttack = {"wrhf/ground_thud/pound1.wav", "wrhf/ground_thud/pound2.wav", "wrhf/ground_thud/pound3.wav", "wrhf/ground_thud/pound4.wav"}
-        self.AnimTbl_MeleeAttack = {"vjseq_gonome_stomp_gib"}
+        self.AnimTbl_MeleeAttack = {"gonome_stomp_gib"}
         self.VJ_PlayingSequence = true
         self.VJ_PlayingInterruptSequence = false
         self.PlayingAttackAnimation = true
 
-        local debrisModels = {
-            "models/props_debris/concrete_chunk02a.mdl",
-            "models/props_debris/concrete_chunk03a.mdl",
-            "models/props_debris/concrete_chunk04a.mdl",
-            "models/props_debris/concrete_chunk05g.mdl",
-            "models/props_debris/concrete_chunk08a.mdl",
-            "models/props_debris/concrete_chunk09a.mdl",
-        }
+        local sequenceID = self:LookupSequence("gonome_stomp_gib")
+        local sequenceDuration = self:SequenceDuration(sequenceID)
 
-        timer.Simple(0.75, function()
+        timer.Simple(sequenceDuration * 0.5, function() 
             if IsValid(self) then
                 VJ_EmitSound(self, self.SoundTbl_Crash, self.AlertSoundLevel, self:VJ_DecideSoundPitch(self.BeforeMeleeAttackSoundPitch.a, self.BeforeMeleeAttackSoundPitch.b))
                 util.ScreenShake(self:GetPos(), 300, 500, 1.6, 1200)
             end
         end)
 
-        timer.Simple(0.76, function()
+        timer.Simple(sequenceDuration * 0.6, function() 
             if IsValid(self) then
                 local pos = self:GetPos()
                 ParticleEffect("strider_impale_ground", pos, Angle(0, 0, 0), nil)
@@ -511,6 +505,7 @@ function ENT:CustomOnMeleeAttack_BeforeStartTimer(seed)
                     end
                 end
 
+                local debrisModels = {"models/props_debris/concrete_chunk02a.mdl","models/props_debris/concrete_chunk03a.mdl","models/props_debris/concrete_chunk04a.mdl","models/props_debris/concrete_chunk05g.mdl","models/props_debris/concrete_chunk08a.mdl","models/props_debris/concrete_chunk09a.mdl",}
                 local numDebris = math.random(1, 5)
                 for i = 1, numDebris do
                     local debris = ents.Create("prop_physics")
@@ -528,7 +523,6 @@ function ENT:CustomOnMeleeAttack_BeforeStartTimer(seed)
         end)
     end
 end
-
 
 function ENT:CustomOnIdleDialogueAnswer(ent) 
 if self.VJ_IsBeingControlled or self.VJTags[VJ_TAG_EATING] then return end
