@@ -6,35 +6,28 @@ include("shared.lua")
 	without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
 -----------------------------------------------*/
 ENT.Model = "models/headcrabblack.mdl"
-ENT.StartHealth = 50
+ENT.StartHealth = 75
 ENT.HullType = HULL_TINY
 ENT.VJ_NPC_Class = {"CLASS_ZOMBIE","CLASS_HEADCRAB"}
 ENT.LastSeenEnemyTimeUntilReset = 999999999999999 -- Time until it resets its enemy if its current enemy is not visible
 ENT.HasDeathAnimation = true-- Does it play an animation when it dies?
-ENT.AnimTbl_Death = {"Die"} -- Death Animations
+ENT.AnimTbl_Death = {"vjseq_die"} -- Death Animations
 ENT.DeathAnimationTime = false -- Time until the SNPC spawns its corpse and gets removed
 ENT.DeathAnimationChance = 2 -- Put 1 if you want it to play the animation all the time
 ENT.CanFlinch = 1 -- 0 = Don't flinch | 1 = Flinch at any damage | 2 = Flinch only from certain damages
-ENT.FlinchChance = 1 -- Chance of it flinching from 1 to x | 1 will make it always flinch
-ENT.AnimTbl_Flinch = {"Flinch1"} -- If it uses normal based animation, use this
+ENT.FlinchChance = 2 -- Chance of it flinching from 1 to x | 1 will make it always flinch
+ENT.AnimTbl_Flinch = {"vjseq_flinch1"} -- If it uses normal based animation, use this
 ENT.TimeUntilEnemyLost = 99999999999999999 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ENT.HasRangeAttack = true -- Should the SNPC have a range attack?
 ENT.RangeAttackAnimationFaceEnemy = true -- Should it face the enemy while playing the range attack animation?
 ENT.RangeAttackEntityToSpawn = "obj_vj_corrosive_proj" -- The entity that is spawned when range attacking
-ENT.AnimTbl_RangeAttack = {"Spitattack"} -- Range Attack Animations
+ENT.AnimTbl_RangeAttack = {"vjseq_spitattack"} -- Range Attack Animations
 ENT.RangeToMeleeDistance = 200 -- How close does it have to be until it uses melee?
 ENT.RangeDistance = 2000 -- This is how far away it can shoot
 ENT.RangeAttackReps = 1 -- How many times does it run the projectile code?
-ENT.TimeUntilRangeAttackProjectileRelease = 0.8
+ENT.TimeUntilRangeAttackProjectileRelease = 0.725
 ENT.NextRangeAttackTime = 3 -- How much time until it can use a range attack?
-ENT.HasMeleeAttackKnockBack = true -- If true, it will cause a knockback to its enemy
-ENT.MeleeAttackKnockBack_Forward1 = 70 -- How far it will push you forward | First in math.random
-ENT.MeleeAttackKnockBack_Forward2 = 90 -- How far it will push you forward | Second in math.random
-ENT.MeleeAttackKnockBack_Up1 = 40 -- How far it will push you up | First in math.random
-ENT.MeleeAttackKnockBack_Up2 = 60 -- How far it will push you up | Second in math.random
-ENT.MeleeAttackKnockBack_Right1 = math.random(12,30) -- How far it will push you right | First in math.random
-ENT.MeleeAttackKnockBack_Right2 = math.random(8,24) -- How far it will push you right | Second in math.random
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ENT.HasMeleeAttack = false
 ENT.HasLeapAttack = true -- Should the SNPC have a leap attack?
@@ -48,7 +41,7 @@ ENT.TimeUntilLeapAttackVelocity = 1.48 -- How much time until it runs the veloci
 ENT.LeapAttackVelocityForward = 50 -- How much forward force should it apply?
 ENT.LeapAttackVelocityUp = 250 -- How much upward force should it apply?
 ENT.LeapAttackDamageType = DMG_POISON
-ENT.LeapAttackExtraTimers = {1.6,1.8,2} -- Extra leap attack timers | it will run the damage code after the given amount of seconds
+ENT.LeapAttackExtraTimers = {1.7,1.9,2.1,2.3}
 ENT.StopLeapAttackAfterFirstHit = true
 ENT.LeapAttackDamageDistance = 40 -- How far does the damage go?
 ENT.FootStepTimeRun = 0.5 -- Next foot step sound when it is running
@@ -61,7 +54,7 @@ ENT.BloodColor = "Yellow"
 ENT.HasBloodParticle = true 
 ENT.HasBloodDecal = true 
 ENT.HasBloodPool = true 
-ENT.NextRangeAttackTime = 6
+ENT.NextRangeAttackTime = 5
 ENT.AnimTbl_IdleStand = {"Idle01","Idle01fast","IdleSumo","IdleSniff"}
 ENT.InvestigateSoundDistance = 200 -- How far away can the SNPC hear sounds? | This number is timed by the calculated volume of the detectable sound.
 ENT.Immune_AcidPoisonRadiation = true -- Immune to Acid, Poison and Radiation
@@ -71,89 +64,87 @@ ENT.AnimTbl_Walk = {ACT_WALK}
 ENT.AnimTbl_Run = {ACT_RUN} 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ENT.CallForHelp = true -- Does the SNPC call for help?
-ENT.CallForHelpDistance = 4000 -- -- How far away the SNPC's call for help goes | Counted in World 
+ENT.CallForHelpDistance = 8000 -- -- How far away the SNPC's call for help goes | Counted in World 
 ---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:RangeAttackProjSpawnPos(projectile)
+	return self:GetPos() + self:GetUp() * math.random(5,20) + self:GetForward() * math.random(5,12)
+end
+
 function ENT:RangeAttackCode_GetShootPos(TheProjectile)
     return (self:GetEnemy():GetPos() - self:LocalToWorld(Vector(math.random(-30,30),math.random(-30,30),math.random(20,30))))*2 + self:GetUp()*300
 end
 
-function ENT:CustomOnAlert(ent)
-if math.random(1,3) == 1 then
-self:VJ_ACT_PLAYACTIVITY("Threatdisplay",true,false,false)
-self.CallForHelp = true 
-self.CallForHelpDistance = 500000000000
-ParticleEffectAttach("antlion_gib_02_gas",PATTACH_POINT_FOLLOW,self,6)
-
-elseif math.random(1,3) == 2 then
-self:VJ_ACT_PLAYACTIVITY("Telegraph_B",true,false,false)
-self.CallForHelp = true 
-self.CallForHelpDistance = 50000000000
-ParticleEffectAttach("antlion_gib_02_gas",PATTACH_POINT_FOLLOW,self,6)
-
-elseif math.random(1,3) == 3 then
-self:VJ_ACT_PLAYACTIVITY("Telegraph_B2",true,false,false)
-self.CallForHelp = true 
-self.CallForHelpDistance = 500000000000
-ParticleEffectAttach("antlion_gib_02_gas",PATTACH_POINT_FOLLOW,self,6)
+function ENT:CustomOnInitialize()
+	self.ThrownSpawn = false 
+	self.DrownAnim = "drown"
 end
+
+function ENT:CustomOnAlert(ent)
+	if math.random(1,2) == 1 and IsValid(self) then
+    local anims = VJ_PICK({"vjseq_threatdisplay", "vjseq_telegraph_b", "vjseq_telegraph_b2"})
+    self:VJ_ACT_PLAYACTIVITY(selectedAnim, true, false, false)
+    ParticleEffectAttach("antlion_gib_02_gas", PATTACH_POINT_FOLLOW, self, 6)
+	end
 end
 
 function ENT:CustomOnCallForHelp()
-if math.random(1,3) == 1 then
-self:VJ_ACT_PLAYACTIVITY("Threatdisplay",true,false,false)
-self.CallForHelp = true 
-self.CallForHelpDistance = 500000000000
-ParticleEffectAttach("antlion_gib_02_gas",PATTACH_POINT_FOLLOW,self,6)
-
-elseif math.random(1,3) == 2 then
-self:VJ_ACT_PLAYACTIVITY("Telegraph_B",true,false,false)
-self.CallForHelp = true 
-self.CallForHelpDistance = 50000000000
-ParticleEffectAttach("antlion_gib_02_gas",PATTACH_POINT_FOLLOW,self,6)
-
-elseif math.random(1,3) == 3 then
-self:VJ_ACT_PLAYACTIVITY("Telegraph_B2",true,false,false)
-self.CallForHelp = true 
-self.CallForHelpDistance = 500000000000
-ParticleEffectAttach("antlion_gib_02_gas",PATTACH_POINT_FOLLOW,self,6)
+	if math.random(1,2) == 1 and IsValid(self) then
+		local anims = VJ_PICK({"vjseq_threatdisplay", "vjseq_telegraph_b", "vjseq_telegraph_b2"})
+		self:VJ_ACT_PLAYACTIVITY(selectedAnim, true, false, false)
+		ParticleEffectAttach("antlion_gib_02_gas", PATTACH_POINT_FOLLOW, self, 6)
+	end
 end
+
+ENT.NextDrownAnimT = 0
+ENT.IsDrowning = false
+
+function ENT:Drown()
+    if self:WaterLevel() > 1 and CurTime() > self.NextDrownAnimT then
+        self.IsDrowning = true
+        self:VJ_ACT_PLAYACTIVITY(self.DrownAnim, true, false, false)
+        local drownAnimDur = self:SequenceDuration(self:LookupSequence(self.DrownAnim))
+        self:SetState(VJ_STATE_ONLY_ANIMATION_CONSTANT, drownAnimDur)
+        self.NextDrownAnimT = CurTime() + drownAnimDur 
+        self:SetVelocity(Vector(0, 0, 3))
+        self:TakeDamage(math.random(5,25))
+		self.CanFlinch = 0 
+		self.HasDeathAnimation = false
+		self.Bleeds = false
+        
+        timer.Create("DrownAnimTimer_" .. self:EntIndex(), drownAnimDur, 1, function()
+            if IsValid(self) and self:WaterLevel() > 2 then
+                self:Drown() 
+            else
+                timer.Remove("DrownAnimTimer_" .. self:EntIndex()) 
+                self.IsDrowning = false 
+				self.CanFlinch = 1
+				self.HasDeathAnimation = true
+				self.Bleeds = true 
+            end
+        end)
+    end
+end
+
+function ENT:CustomOnThink_AIEnabled()
+    if IsValid(self) and not self.IsDrowning then
+        self:Drown()
+    end
 end
 
 function ENT:CustomOnThink()
-if self:WaterLevel() > 1 then
-self.MovementType = VJ_MOVETYPE_STATIONARY
-self.SightDistance = 1 
-self.Behavior = VJ_BEHAVIOR_PASSIVE_NATURE
-self.IsGuard = true
-self.CallForHelp = false
-self:VJ_TASK_IDLE_STAND("TASK_IDLE_STAND")
-self:SetVelocity(Vector(0,0,2))
-self.AnimTbl_IdleStand = {"drown"}
-self.Bleeds = false
-self.HasLeapAttack = false
-self.HasRangeAttack = false
-self:TakeDamage(1)
-end
+    local isLowHealth = self:Health() <= 10
+    local isOnFire = self:IsOnFire()
 
-if self:Health() <= 10 then
-self.AnimTbl_Run = {VJ_SequenceToActivity(self,"Scurry")}
-self.AnimTbl_Walk = {VJ_SequenceToActivity(self,"Scurry")}
-self.FootStepTimeRun = 0.09
-self.FootStepTimeWalk = 0.09
-else
-self.AnimTbl_Walk = {ACT_WALK}
-self.AnimTbl_Run = {ACT_RUN} 
-
-if self:IsOnFire() then
-self.AnimTbl_Run = {VJ_SequenceToActivity(self,"Scurry")}
-self.AnimTbl_Walk = {VJ_SequenceToActivity(self,"Scurry")}
-self.FootStepTimeRun = 0.09
-self.FootStepTimeWalk = 0.09
-else
-self.AnimTbl_Walk = {ACT_WALK}
-self.AnimTbl_Run = {ACT_RUN} 
-end
-end
+    if isLowHealth or isOnFire then
+        local scurryAnim = {VJ_SequenceToActivity(self, "Scurry")}
+        self.AnimTbl_Run = scurryAnim
+        self.AnimTbl_Walk = scurryAnim
+        self.FootStepTimeRun = 0.09
+        self.FootStepTimeWalk = 0.09
+    else
+        self.AnimTbl_Walk = {ACT_WALK}
+        self.AnimTbl_Run = {ACT_RUN}
+    end
 end
 
 function ENT:CustomOnTakeDamage_BeforeDamage(dmginfo,hitgroup)
@@ -163,32 +154,35 @@ end
 end
 
 function ENT:SetUpGibesOnDeath(dmginfo, hitgroup)
-self.HasDeathRagdoll = false
-VJ_EmitSound(self, "gib/bodysplat.wav", 90, 100)
-local effectBlood = EffectData()
-effectBlood:SetOrigin(self:GetPos() + self:OBBCenter())
-effectBlood:SetColor(VJ_Color2Byte(Color(255,221,35)))
-effectBlood:SetScale(50)
-util.Effect("VJ_Blood1",effectBlood)		
-local bloodspray = EffectData()
-bloodspray:SetOrigin(self:GetPos() + self:OBBCenter())
-bloodspray:SetScale(8)
-bloodspray:SetFlags(3)
-bloodspray:SetColor(1)
-util.Effect("bloodspray",bloodspray)
-util.Effect("bloodspray",bloodspray)
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/sgib_01.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/sgib_03.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/sgib_01.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/sgib_03.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/sgib_01.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/sgib_03.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/sgib_01.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/sgib_03.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/sgib_01.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/mgib_07.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/mgib_06.mdl",{Pos=self:GetPos()+self:OBBCenter()})
-self:CreateGibEntity("obj_vj_gib","models/gibs/xenians/mgib_06.mdl",{Pos=self:GetPos()+self:OBBCenter()})
+    self.HasDeathRagdoll = false
+    VJ_EmitSound(self, "physics/body/body_medium_break2.wav", 90, 100)
+    local centerPos = self:GetPos() + self:OBBCenter()
+    local effectBlood = EffectData()
+    effectBlood:SetOrigin(centerPos)
+    effectBlood:SetColor(VJ_Color2Byte(Color(math.random(200,255), math.random(200,230), 35))) 
+    effectBlood:SetScale(math.random(30,64))
+    util.Effect("VJ_Blood1", effectBlood)
+    local bloodspray = EffectData()
+    bloodspray:SetOrigin(centerPos)
+    bloodspray:SetScale(8)
+    bloodspray:SetFlags(3)
+    bloodspray:SetColor(1)
+    util.Effect("bloodspray", bloodspray)
+    util.Effect("bloodspray", bloodspray)
+    local gibModels = {"models/gibs/xenians/sgib_01.mdl","models/gibs/xenians/sgib_03.mdl","models/gibs/xenians/mgib_07.mdl","models/gibs/xenians/mgib_06.mdl"}
+    for i = 1, 3 do
+        for _, model in ipairs(gibModels) do
+            self:CreateGibEntity("obj_vj_gib", model, {Pos = centerPos})
+        end
+    end
+end
+
+function ENT:CustomOnLeapAttack_AfterStartTimer(seed)
+	local pos = self:GetPos()
+	if IsValid(self:GetEnemy()) then
+		pos = self:GetEnemy():GetPos()
+	end
+	sound.EmitHint(SOUND_DANGER, pos, 250, 1, self)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 -- ====== Sound Pitch ====== --
@@ -198,13 +192,13 @@ end
 ENT.UseTheSameGeneralSoundPitch = true 
 	-- If set to true, it will make the game decide a number when the SNPC is created and use it for all sound pitches set to "UseGeneralPitch"
 	-- It picks the number between the two variables below:
-ENT.GeneralSoundPitch1 = 100
+ENT.GeneralSoundPitch1 = 75
 ENT.GeneralSoundPitch2 = 100
 	-- This two variables control any sound pitch variable that is set to "UseGeneralPitch"
 	-- To not use these variables for a certain sound pitch, just put the desired number in the specific sound pitch
-ENT.FootStepPitch1 = 100
+ENT.FootStepPitch1 = 75
 ENT.FootStepPitch2 = 100
-ENT.BreathSoundPitch1 = 100
+ENT.BreathSoundPitch1 = 75
 ENT.BreathSoundPitch2 = 100
 ENT.IdleSoundPitch1 = "UseGeneralPitch"
 ENT.IdleSoundPitch2 = "UseGeneralPitch"

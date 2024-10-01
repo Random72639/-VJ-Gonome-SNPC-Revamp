@@ -5,7 +5,7 @@ include('shared.lua')
 	No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 	without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
 -----------------------------------------------*/
-ENT.Model = {"models/ez2/npc/gonome.mdl"} -- The game will pick a random model from the table when the SNPC is spawned | Add as many as you want
+ENT.Model = {"models/1_rnds_gonomes/ez2/npc/gonome.mdl"} -- The game will pick a random model from the table when the SNPC is spawned | Add as many as you want
 ENT.StartHealth = 650
 ENT.HullType = HULL_HUMAN
 ENT.VJ_NPC_Class = {"CLASS_ZOMBIE"} -- NPCs with the same class with be allied to each other
@@ -461,10 +461,9 @@ function ENT:CustomOnMeleeAttack_BeforeStartTimer(seed)
         self.MeleeAttackAnimationFaceEnemy = true
         self.MeleeAttackDamage = math.random(30, 35)
         self.HasMeleeAttackKnockBack = true
-        self.MeleeAttackDamageDistance = 140
         self.MeleeAttackExtraTimers = false
         self.TimeUntilMeleeAttackDamage = 0.7
-        self.MeleeAttackDistance = 125
+        self.MeleeAttackDistance = 100
         self.MeleeAttackDamageDistance = 155
         self.SoundTbl_MeleeAttackMiss = {"wrhf/ground_thud/pound1.wav", "wrhf/ground_thud/pound2.wav", "wrhf/ground_thud/pound3.wav", "wrhf/ground_thud/pound4.wav"}
         self.SoundTbl_MeleeAttack = {"wrhf/ground_thud/pound1.wav", "wrhf/ground_thud/pound2.wav", "wrhf/ground_thud/pound3.wav", "wrhf/ground_thud/pound4.wav"}

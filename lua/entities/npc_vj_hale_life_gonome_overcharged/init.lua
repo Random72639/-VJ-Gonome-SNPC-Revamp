@@ -140,11 +140,11 @@ end
 function ENT:CustomOnInitialize()
 local GonomeModel = math.random(1,2)
 if GonomeModel == 1 then
-self:SetModel( Model("models/overchraged_gonome/gonome.mdl") )
+self:SetModel( Model("models/1_rnds_gonomes/overchraged_gonome/gonome.mdl") )
 self:SetBodygroup(1,math.random(1,1))
 
 elseif GonomeModel == 2 then
-self:SetModel( Model("models/overchraged_gonome/gonome_ov.mdl") )
+self:SetModel( Model("models/1_rnds_gonomes/overchraged_gonome/gonome_ov.mdl") )
 self:SetBodygroup(1,math.random(1,1))
 end
 

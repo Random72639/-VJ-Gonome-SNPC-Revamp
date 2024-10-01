@@ -15,12 +15,17 @@ if VJExists == true then
 	include('autorun/vj_controls.lua')
 
     local vCat = "Zombies + Enemy Aliens" 
-        // -- Weapons -- \\
+        // -- Basic Gonome's & Extra -- \\
         VJ.AddNPC("Gonome","npc_vj_hale_life_gonome",vCat)
         VJ.AddNPC("Gonome Ver2","npc_vj_hale_life_gonome_2",vCat)
         VJ.AddNPC("Explosive Gonome","npc_vj_hale_life_gonome_3",vCat)
         VJ.AddNPC("Electrical Gonome","npc_vj_hale_life_gonome_4",vCat)
+        VJ.AddNPC("HL:2 Gonome [Overcharged]","npc_vj_hale_life_gonome_overcharged",vCat)
+        VJ.AddNPC("HL:2 Gonome [SMOD]","npc_vj_hale_life_gonome_smod",vCat)
+        VJ.AddNPC("HL:2 Gonome [Beta]","npc_vj_hale_life_beta_gonome",vCat)
+        VJ.AddNPC("HL:2 Headcrab [Thrown-Poison]","npc_vj_thrown_poison_headcrab",vCat)
 
+		// -- EZ:2 Gonome's -- \\
         VJ.AddNPC("Gonome [EZ:2] (Female)","npc_vj_ez2_gonome_fem",vCat)
         VJ.AddNPC("Glownome [EZ:2] (Female)","npc_vj_ez2_glownome_fem",vCat)
         VJ.AddNPC("Gonome [EZ:2] Classic Headcrab (Female)","npc_vj_ez2_gonome_classic_fem",vCat)
@@ -30,22 +35,18 @@ if VJExists == true then
         VJ.AddNPC("Gonome [RTB:R]","npc_vj_rtbr_gonome",vCat)
         VJ.AddNPC("Gonome [EZ:2-Remake]","npc_vj_ez2_gonome_remake",vCat)
 
-        VJ.AddNPC("Poison Gonome Ver2","npc_vj_hale_life_gonome_poison",vCat)
-        VJ.AddNPC("Gonome (Overcharged)","npc_vj_hale_life_gonome_overcharged",vCat)
-        VJ.AddNPC("Smod Gonome","npc_vj_hale_life_gonome_smod",vCat)
-
-        VJ.AddNPC("HL2 Beta Gonome","npc_vj_hale_life_beta_gonome",vCat)
-        VJ.AddNPC("HL1 OpFor Gonome","npc_vj_half_life_op4_gonome",vCat)
-        VJ.AddNPC("HL1 Scientist Gonome","npc_vj_hl_gn_sci",vCat)
-        VJ.AddNPC("HL1 HECU Gonome","npc_vj_hl_gn_sol",vCat)
-        VJ.AddNPC("HL1 Security Gonome","npc_vj_hl_gn_grd",vCat)
+		// -- HL:1 Gonome's -- \\
+        VJ.AddNPC("HL:1 Gonome [Poison]","npc_vj_hale_life_gonome_poison",vCat)
+        VJ.AddNPC("HL:1 Gonome [OpFor]","npc_vj_half_life_op4_gonome",vCat)
+        VJ.AddNPC("HL:1 Gonome [Scientist]","npc_vj_hl_gn_sci",vCat)
+        VJ.AddNPC("HL:1 Gonome [H.E.C.U.]","npc_vj_hl_gn_sol",vCat)
+        VJ.AddNPC("HL:1 Gonome [Security]","npc_vj_hl_gn_grd",vCat)
 
 
 	// -- Required Addons! -- \\
 	if SERVER then
         resource.AddWorkshop("131759821") -- VJ Base --
     end
-
 
         -- Menu --
 	local AddConvars = {}
