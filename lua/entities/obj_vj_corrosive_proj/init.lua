@@ -16,19 +16,21 @@ ENT.DirectDamage = 10 -- How much damage should it do when it hits something
 ENT.DirectDamageType = DMG_ACID -- Damage type
 ENT.DecalTbl_DeathDecals = {"VJ_AcidSlime1"}
 ENT.SoundTbl_Idle = {"vj_acid/acid_idle1.wav"}
-ENT.SoundTbl_OnCollide = {"vj_acid/acid_splat.wav"}
+ENT.SoundTbl_OnCollide = {"physics/body/body_medium_break4.wav"}
+ENT.SoundTbl_Startup = {"weapons/crossbow/bolt_fly4.wav"}
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function ENT:CustomOnThink()
-
-end
 function ENT:CustomOnInitialize()
-	ParticleEffectAttach("antlion_spit_trail",PATTACH_ABSORIGIN_FOLLOW,self,0)
-	ParticleEffect("antlion_spit",self:GetPos(),Angle(0,0,0),nil)
+    ParticleEffectAttach("antlion_spit_trail", PATTACH_ABSORIGIN_FOLLOW, self, 0)
+    ParticleEffect("antlion_spit", self:GetPos(), Angle(0, 0, 0), nil)
+	local SpitSound = VJ_PICK({"gonome/antlion_shoot2.wav","gonome/antlion_shoot1.wav","gonome/antlion_shoot3.wav",})
+    VJ_EmitSound(self,SpitSound, 75, 100)
 end
+
 function ENT:CustomPhysicsObjectOnInitialize(phys)
 	phys:Wake()
 	phys:SetBuoyancyRatio(0)
 	phys:EnableDrag(false)
+	ParticleEffectAttach("antlion_spit_trail",PATTACH_ABSORIGIN_FOLLOW,self,0)
 end
 
 function ENT:DeathEffects(data,phys)

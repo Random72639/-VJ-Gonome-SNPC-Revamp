@@ -146,7 +146,7 @@ end
 function ENT:CustomOnLeapAttackVelocityCode()
     if IsValid(self) then
         self:RemoveAllGestures()
-        self:SetGroundEntity(NULL)
+        //self:SetGroundEntity(NULL)
         self:ForceMoveJump(self:CalculateProjectile("Curve", self:GetPos(), self:GetEnemy():GetPos(),math.random(self:GetEnemy():GetPos():Distance(self:GetPos()),900,1500)))
         return true
     end
@@ -1056,6 +1056,7 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 	-- ====== Sound File Paths ====== --
 -- Leave blank if you don't want any sounds to play
+ENT.SoundTbl_Breath = {"npc/zombie_poison/pz_breathe_loop1.wav","npc/zombie_poison/pz_breathe_loop2.wav"}
 ENT.SoundTbl_Alert = {"ez2_gonome/beast_berserk.wav","ez2_gonome/beast_spotted.wav","ez2_gonome/beast_alert.wav","ez2_gonome/beastsighting01.wav","ez2_gonome/beastsighting02.wav"}
 ENT.SoundTbl_Investigate = {"ez2_gonome/beast_growl2.wav","ez2_gonome/beast_growl3.wav"}
 ENT.SoundTbl_BeforeRangeAttack = {"ez2_gonome/slime_zombie_emerge.wav"}

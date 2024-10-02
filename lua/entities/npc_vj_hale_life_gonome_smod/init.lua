@@ -303,61 +303,6 @@ function ENT:Controller_IntMsg(ply)
 ply:ChatPrint("JUMP = Press Space Bar")
 end
 
-ENT.CanThrowHC = true
-ENT.NextHCThrowT = 0
-ENT.HCThrown = false
-ENT.Headcrab1 = nil
-
-function ENT:ThrowHeadcrab()
-    if not IsValid(self:GetEnemy()) or not self.CanThrowHC then return end
-    if CurTime() <= self.NextHCThrowT then return end
-    if not self:IsOnGround() or self:GetPos():Distance(self:GetEnemy():GetPos()) >= 699 then return end
-    if IsValid(self.Headcrab1) or self.HCThrown then return end
-
-    self.HCThrown = true
-    local ene = self:GetEnemy()
-
-    self:VJ_ACT_PLAYACTIVITY("Attack1", true, 0.8, false)
-    VJ_CreateSound(self, "ez2_gonome/slime_zombie_emerge.wav", 100, 100)
-    VJ_CreateSound(self, "ez2_gonome/beast_berserk.wav", 100, 100)
-
-    timer.Simple(0.5, function()
-        if not IsValid(self) or not IsValid(ene) then return end
-        
-        local headcrabPos = self:GetPos() + self:GetForward() * 100 + self:GetUp() * 5
-        local headcrabAng = self:GetAngles() + Angle(0, math.random(0, 360), 0)
-        
-        local Headcrab1 = ents.Create("npc_vj_thrown_poison_headcrab")
-        if not IsValid(Headcrab1) then return end
-        
-        Headcrab1:SetPos(headcrabPos)
-        Headcrab1:SetAngles(headcrabAng)
-        Headcrab1:Spawn()
-        Headcrab1:SetNoDraw(true)
-        Headcrab1.ThrownSpawn = true
-        
-        local throwDirection = (IsValid(ene) and (ene:GetPos() + ene:OBBCenter() - self:GetPos()):GetNormalized() or self:GetForward())
-        local throwVelocity = throwDirection * math.random(400,740) + self:GetUp() * math.random(100,250)
-        Headcrab1:SetVelocity(throwVelocity)
-        
-        Headcrab1:VJ_DoSetEnemy(ene, true)
-
-        timer.Simple(0.3, function()
-            if IsValid(Headcrab1) then
-                Headcrab1:SetNoDraw(false)
-            end
-        end)
-
-        self.Headcrab1 = Headcrab1
-        self.HCThrown = false
-        self.NextHCThrowT = CurTime() + math.random(10, 25) 
-    end)
-end
-
-
-function ENT:CustomOnThink_AIEnabled()
-	self:ThrowHeadcrab()
-end
 
 function ENT:CustomOnThink()
 if self.VJ_IsBeingControlled then

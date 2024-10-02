@@ -44,9 +44,9 @@ if VJExists == true then
 
 
 	// -- Required Addons! -- \\
-	if SERVER then
+	/*if SERVER then
         resource.AddWorkshop("131759821") -- VJ Base --
-    end
+    end*/
 
         -- Menu --
 	local AddConvars = {}
