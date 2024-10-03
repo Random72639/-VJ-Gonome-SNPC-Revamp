@@ -129,9 +129,9 @@ function ENT:RangeAttackCode_GetShootPos(projectile)
         endpos = enemy:GetPos() + Vector(0, 0, 800),
         filter = enemy
     })
-    local offset = VectorRand() * 50
+    local offset = VectorRand() * 40
     if tr.Hit then
-        return self:CalculateProjectile("Curve", projectile:GetPos(), enemy:GetPos() + enemy:OBBCenter() + offset, 1200)
+        return self:CalculateProjectile("Curve", projectile:GetPos(), enemy:GetPos() + enemy:OBBCenter() + offset, 1525)
     end
     local distanceToEnemy = self:GetPos():Distance(enemy:GetPos())
     local rangeAdjustment = 0
@@ -602,9 +602,9 @@ function ENT:CustomOnEat(status, statusInfo)
         local newHealth = self:Health() + math.min(damage, foodHP)
         self:SetHealth(newHealth)
 
-        if foodHP <= 0 then
-            food:Remove() -- Remove the corpse if its health reaches zero
-        end
+        /*if foodHP <= 0 then
+            food:Remove() 
+        end*/
 
         local bloodData = food.BloodData
         if bloodData then
@@ -726,7 +726,7 @@ end
 
 ENT.NextLandOnGroundT = 1
 function ENT:LandOnGround()
-    if self.Flinching or self.Dead or not IsValid(self) then 
+    if self.Flinching or not IsValid(self) then 
         return false 
     end
 
@@ -750,7 +750,7 @@ function ENT:LandOnGround()
         if not onGround then
             if self.EmplacedOnTheGround then
                 self.EmplacedOnTheGround = false
-                self:SetGroundEntity(NULL)
+                //self:SetGroundEntity(NULL)
                 if CurTime() > (self.NextLandT or 0) then
                 end
             end
@@ -759,10 +759,10 @@ function ENT:LandOnGround()
                 self.EmplacedOnTheGround = true
                 
                 if CurTime() > (self.NextLandOnGroundT or 0) and self.EmplacedOnTheGround then
-                    self:SetGroundEntity(self)
-                    self.NextLandOnGroundT = CurTime() + math.random(0.1, 1.25)
+                    //self:SetGroundEntity(self)
+                    self.NextLandOnGroundT = CurTime() + math.Rand(0.95, 1.25)
                     local HumanimalLandAnim = VJ_PICK({"jump_glide_end_new"}) --VJ.PICK({"jump_glide_end_new","jump_glide_end"})
-                    self:VJ_ACT_PLAYACTIVITY(HumanimalLandAnim, true, false, false )
+                    self:VJ_ACT_PLAYACTIVITY(HumanimalLandAnim, true, false, false)
                 end
             end
         end
@@ -778,7 +778,7 @@ function ENT:DetectLandingSeq()
                 VJ_EmitSound(self,"npc/antlion/land1.wav", 70,100)
                 --VJ.EmitSound(self,"npc/antlion/land1.wav", 70,100)
              end
-        self.NextLandCheck = CurTime() + 0.625
+        self.NextLandCheck = CurTime() + 1
     end
 end
 
@@ -820,100 +820,18 @@ function ENT:ExtinguishFire()
 end
 
 function ENT:CustomOnThink_AIEnabled()
-    self:DetectLandingSeq()
-    self:LandOnGround()
-    self:BreakDoorDown()
-    self:CheckFireStatus()
-    self:SetCollisionBounds(Vector(-25,-22,100),Vector(35,35,0))
-    if !IsValid(self) or self:IsOnFire() or self.MovementType == VJ_MOVETYPE_STATIONARY or self.Medic_Status or self.Flinching or self.IsFollowing == true or self:GetState() == VJ_STATE_ONLY_ANIMATION or self.SelfIsFlipped == true or self.IsDrowning == true or self.VJTags[VJ_TAG_EATING] then 
-        return 
+    if IsValid(self) then
+        self:DetectLandingSeq()
+        self:LandOnGround()
+        self:BreakDoorDown()
+        self:CheckFireStatus()
+        self:AllowedToEatGibs()
     end
-
-    for _,v in ipairs(ents.FindInSphere(self:GetPos(),1250)) do
-        if IsValid(self) and IsValid(v) and (self:GetMaxHealth() * 0.99) >= self:Health() and !IsValid(self:GetEnemy()) and !self:IsBusy() then
-            if v:GetClass():find("prop_ragdoll") then
-                self:SetLastPosition(select(2, self:VJ_GetNearestPointToEntity(v)))
-                self:VJ_TASK_GOTO_LASTPOS("TASK_RUN_PATH")
-                local MedicalItemDist = self:VJ_GetNearestPointToEntityDistance(v)
-
-                if MedicalItemDist < math.random(10,25) then
-                    self:FaceCertainEntity(v)
-                    self:VJ_ACT_PLAYACTIVITY("vjseq_victoryeat1",true,false,false)
-
-                    
-                    timer.Simple(math.random(4, 4.5), function()
-                        if IsValid(self) and IsValid(v) then
-                            VJ_EmitSound(self,"wrhf/gibs/fullbodygib-2.wav")
-                            self:SetHealth(math.Clamp(self:Health() + math.random(15,50), 0, self:GetMaxHealth()))
-                            v:Remove()
-                            local bloodeffect = EffectData()
-                            ParticleEffect("antliongib",v:GetPos(),Angle(0,0,0),nil)
-                            bloodeffect:SetOrigin(v:GetPos() + v:OBBCenter())
-                            bloodeffect:SetColor(VJ_Color2Byte(Color(130,19,10)))
-                            bloodeffect:SetScale(50)
-                            util.Effect("VJ_Blood1", bloodeffect)		
-                            local bloodspray = EffectData()
-                            bloodspray:SetOrigin(v:GetPos() + v:OBBCenter())
-                            bloodspray:SetScale(2)
-                            bloodspray:SetFlags(3)
-                            bloodspray:SetColor(0)
-                            util.Effect("bloodspray", bloodspray)
-                            util.Effect("bloodspray", bloodspray)
-                            local GibSounds = {"wrhf/gibs/fullbodygib-1.wav", "wrhf/gibs/fullbodygib-2.wav", "wrhf/gibs/fullbodygib-3.wav"}
-                            local SelectedGibSound = VJ_PICK(GibSounds)
-                            self:EmitSound(SelectedGibSound, 80, 100)
-
-                            local gibs = {"models/gibs/humans/heart_gib.mdl","models/gibs/humans/liver_gib.mdl","models/gibs/humans/lung_gib.mdl","models/gibs/humans/liver_gib.mdl","models/gibs/humans/lung_gib.mdl","models/gibs/humans/eye_gib.mdl","models/gibs/hgibs.mdl","models/gibs/hgibs_rib.mdl","models/gibs/hgibs_rib.mdl","models/gibs/hgibs_rib.mdl","models/gibs/hgibs_rib.mdl","models/gibs/hgibs_rib.mdl","models/gibs/hgibs_scapula.mdl","models/gibs/hgibs_spine.mdl","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Small","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big","UseHuman_Big"}
-
-                            for _, gibModel in ipairs(gibs) do
-                                local gibEnt = self:CreateGibEntity("obj_vj_gib", gibModel, {Pos = v:GetPos() + v:OBBCenter()})
-                            end
-                        end
-                    end)
-                end
-				
-			-- When eating Gib -- 
-            elseif v:GetClass():find("obj_vj_gib") then
-                self:SetLastPosition(select(2, self:VJ_GetNearestPointToEntity(v)))
-                self:VJ_TASK_GOTO_LASTPOS("TASK_RUN_PATH")
-                local MedicalItemDist = self:VJ_GetNearestPointToEntityDistance(v)
-
-                if MedicalItemDist < math.random(250,300) then
-                    self:VJ_TASK_GOTO_LASTPOS("TASK_WALK_PATH")
-                end
-
-                if MedicalItemDist < math.random(10,25) then
-                    self:FaceCertainEntity(v)
-                    self:VJ_ACT_PLAYACTIVITY("vjseq_victoryeat1",true,false,true)
-
-                    timer.Simple(math.random(4, 4.5), function()
-                        if IsValid(self) and IsValid(v) then
-                            VJ_EmitSound(self,"wrhf/gibs/fullbodygib-2.wav")
-                            self:SetHealth(math.Clamp(self:Health() + math.random(15,50), 0, self:GetMaxHealth()))
-                            v:Remove()
-                            local bloodeffect = EffectData()
-                            ParticleEffect("antliongib",v:GetPos(),Angle(0,0,0),nil)
-                            bloodeffect:SetOrigin(v:GetPos() + v:OBBCenter())
-                            bloodeffect:SetColor(VJ_Color2Byte(Color(130,19,10)))
-                            bloodeffect:SetScale(50)
-                            util.Effect("VJ_Blood1", bloodeffect)		
-                            local bloodspray = EffectData()
-                            bloodspray:SetOrigin(v:GetPos() + v:OBBCenter())
-                            bloodspray:SetScale(2)
-                            bloodspray:SetFlags(3)
-                            bloodspray:SetColor(0)
-                            util.Effect("bloodspray", bloodspray)
-                            util.Effect("bloodspray", bloodspray)
-                        end
-                    end)
-                end
-            end
-        end
+    if self.VJ_IsBeingControlled then
+        self:CustomOnPlyJump()  
     end
-if self.VJ_IsBeingControlled then
-self:CustomOnPlyJump()   
 end
-end
+
 
 ENT.NextZomBreakDoorT = 0
 function ENT:BreakDoorDown()
@@ -987,6 +905,51 @@ function ENT:BreakDoorDown()
 
     if not IsValid(self.BreakDoor) then
         self:SetState()  
+    end
+end
+
+ENT.AllowedToEatGibs = true 
+function ENT:AllowedToEatGibs()
+    if not IsValid(self) or self:IsOnFire() or self.MovementType == VJ_MOVETYPE_STATIONARY or self.Medic_Status or self.Flinching or self.IsFollowing or self:GetState() == VJ_STATE_ONLY_ANIMATION or self:IsBusy() or self.Alerted or not self.AllowedToEatGibs then 
+        return 
+    end
+
+    local maxHealth = self:GetMaxHealth()
+    local currentHealth = self:Health()
+    local healAmountMin, healAmountMax = 25, 70
+    local distThresholdMin, distThresholdMax = 20, 250
+    local searchRadius = 1550
+    local healAmount = math.random(healAmountMin, healAmountMax)
+    local nearbyGibs = ents.FindInSphere(self:GetPos(), searchRadius)
+
+    for _, gib in ipairs(nearbyGibs) do
+        if not IsValid(gib) or not gib:GetClass():find("obj_vj_gib") then
+            continue
+        end
+        local dist = self:GetPos():Distance(gib:GetPos())
+        if (currentHealth / maxHealth) < 0.99 and not IsValid(self:GetEnemy()) and not self:IsBusy() and dist < distThresholdMax then
+            if dist > distThresholdMin then
+                self:SetLastPosition(gib:GetPos())
+                self:VJ_TASK_GOTO_LASTPOS("TASK_WALK_PATH")
+                return
+            end
+            if dist <= distThresholdMin then
+                self:VJ_ACT_PLAYACTIVITY(ACT_MELEE_ATTACK1, true, false, false)
+                VJ_EmitSound(self, "wrhf/gibs/fullbodygib-2.wav")
+                self:SetHealth(math.Clamp(currentHealth + healAmount, 0, maxHealth))
+                local effectData = EffectData()
+                effectData:SetOrigin(gib:GetPos() + gib:OBBCenter())
+                effectData:SetColor(VJ_Color2Byte(Color(130, 19, 10)))
+                effectData:SetScale(50)
+                util.Effect("VJ_Blood1", effectData)
+
+                effectData:SetScale(2)
+                effectData:SetFlags(3)
+                effectData:SetColor(0)
+                util.Effect("bloodspray", effectData)
+                gib:Remove()
+            end
+        end
     end
 end
 

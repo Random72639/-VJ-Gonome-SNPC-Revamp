@@ -68,7 +68,7 @@ ENT.PushProps = true -- Should it push props when trying to move?
 ENT.ConstantlyFaceEnemy = true -- Should it face the enemy constantly?
 ENT.ConstantlyFaceEnemy_IfAttacking = true -- Should it face the enemy when attacking?
 ENT.ConstantlyFaceEnemy_Postures = "Standing" -- "Both" = Moving or standing | "Moving" = Only when moving | "Standing" = Only when standing
-ENT.ConstantlyFaceEnemyDistance = 2000 -- How close does it have to be until it starts to face the enemy?
+ENT.ConstantlyFaceEnemyDistance = 5000 -- How close does it have to be until it starts to face the enemy?
 ENT.NoChaseAfterCertainRange = false -- Should the SNPC not be able to chase when it's between number x and y?
 ENT.NoChaseAfterCertainRange_FarDistance = "UseRangeDistance" -- How far until it can chase again? | "UseRangeDistance" = Use the number provided by the range attack instead
 ENT.NoChaseAfterCertainRange_CloseDistance = "UseRangeDistance" -- How near until it can chase again? | "UseRangeDistance" = Use the number provided by the range attack instead
@@ -83,11 +83,12 @@ ENT.AnimTbl_LeapAttack = {"vjseq_jump1"} -- Melee Attack Animations
 ENT.LeapDistance = 900 -- The distance of the leap, for example if it is set to 500, when the SNPC is 500 Unit away, it will jump
 ENT.LeapToMeleeDistance = 800 -- How close does it have to be until it uses melee?
 ENT.DisableLeapAttackAnimation = true -- if true, it will disable the animation code
+ENT.CanEat = true 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 	-- ====== Flinching Code ====== --
 ENT.CanFlinch = 1 -- 1 = Don't flinch | 1 = Flinch at any damage | 2 = Flinch only from certain damages
 ENT.FlinchChance = 3 -- Chance of it flinching from 1 to x | 1 will make it always flinch
-ENT.AnimTbl_Flinch = {"vjseq_flinch","vjseq_big_flinch"} -- If it uses normal based animation, use this
+ENT.AnimTbl_Flinch = {ACT_SMALL_FLINCH} -- If it uses normal based animation, use this
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ENT.CallForHelp = true -- Does the SNPC call for help?
 ENT.CallForHelpDistance = 4000 -- -- How far away the SNPC's call for help goes | Counted in World 
@@ -97,6 +98,7 @@ end
 
 ENT.ElectricGonome = false
 ENT.ExtinguishAbility = false
+ENT.PoisonGonome = false
 function ENT:CustomOnPreInitialize()
     if not IsValid(self) then return end 
     self:SetCollisionBounds(Vector(-10, -10, 0), Vector(10, 10, 70))
@@ -248,9 +250,9 @@ function ENT:RangeAttackCode_GetShootPos(projectile)
         endpos = enemy:GetPos() + Vector(0, 0, 800),
         filter = enemy
     })
-    local offset = VectorRand() * 50
+    local offset = VectorRand() * 40
     if tr.Hit then
-        return self:CalculateProjectile("Curve", projectile:GetPos(), enemy:GetPos() + enemy:OBBCenter() + offset, 1200)
+        return self:CalculateProjectile("Curve", projectile:GetPos(), enemy:GetPos() + enemy:OBBCenter() + offset, 1525)
     end
     local distanceToEnemy = self:GetPos():Distance(enemy:GetPos())
     local rangeAdjustment = 0
@@ -457,9 +459,10 @@ if IsValid(self) && math.random(1,4) == 1 && !self:IsBusy() && !self.Flinching &
             local ExpluseSound = VJ_PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"})
             VJ_EmitSound(self,ExpluseSound,85,100)
             self:PlaySoundSystem("Alert")
-            VJ_EmitSound(self, {"call_for_help/order_smoke.wav"}, 100, math.random(100, 100))
-
-            self.CallForHelpDistance = 500000000000
+            
+            if math.random(1,3) == 1 then 
+                VJ_EmitSound(self, {"call_for_help/order_smoke.wav"}, 100, math.random(100, 100))
+            end
 
             local bloodeffect = EffectData()
             bloodeffect:SetOrigin(self:GetPos() + self:OBBCenter())
@@ -478,7 +481,7 @@ if IsValid(self) && math.random(1,4) == 1 && !self:IsBusy() && !self.Flinching &
             util.ScreenShake(self:GetPos(), 12, 7, 5, 1250) 
 
             if math.random(1,2) == 1 then
-	timer.Simple(0.0,function() if IsValid(self) then self:VJ_ACT_PLAYACTIVITY({"Big_Flinch"}, true, false, false) end end)
+	timer.Simple(0.1,function() if IsValid(self) then self:VJ_ACT_PLAYACTIVITY(ACT_SMALL_FLINCH, true, false, false) end end)
        end
     end
 end
@@ -502,7 +505,10 @@ if IsValid(self) && math.random(1,2) == 1 && !self:IsBusy() && !self.Flinching &
             --local ExpluseSound = VJ.PICK({"weapons/bugbait/bugbait_squeeze3.wav","weapons/bugbait/bugbait_squeeze2.wav","weapons/bugbait/bugbait_squeeze1.wav"})
             VJ_EmitSound(self,ExpluseSound,85,100)
 			self:PlaySoundSystem("Alert")
+
+            if math.random(1,3) == 1 then 
             VJ_EmitSound(self, {"call_for_help/order_smoke.wav"}, 100, math.random(100, 100))
+            end
 
             self.CallForHelpDistance = 500000000000
 
@@ -523,7 +529,7 @@ if IsValid(self) && math.random(1,2) == 1 && !self:IsBusy() && !self.Flinching &
             util.ScreenShake(self:GetPos(), 12, 7, 5, 1250) 
 
             if math.random(1,2) == 1 then
-	timer.Simple(0.0,function() if IsValid(self) then self:VJ_ACT_PLAYACTIVITY({"Big_Flinch"}, true, false, false) end end)
+	timer.Simple(0.0,function() if IsValid(self) then self:VJ_ACT_PLAYACTIVITY(ACT_SMALL_FLINCH, true, false, false) end end)
        end
     end
 end
@@ -567,6 +573,13 @@ function ENT:ThrowHeadcrab()
         
         Headcrab1:VJ_DoSetEnemy(ene, true)
 
+        if IsValid(self:GetCreator()) then
+            undo.Create(self:GetName())
+            undo.AddEntity(Headcrab1)
+            undo.SetPlayer(self:GetCreator())
+            undo.Finish()
+        end
+        
         timer.Simple(0.3, function()
             if IsValid(Headcrab1) then
                 Headcrab1:SetNoDraw(false)
@@ -605,12 +618,63 @@ function ENT:ExtinguishFire()
 end
 
 function ENT:CustomOnThink_AIEnabled()
-	self:ThrowHeadcrab()
-	self:BreakDoorDown()
-    self:CheckFireStatus()
-	self:IdleElefX()
+    if IsValid(self) then
+        self:ThrowHeadcrab()
+        self:BreakDoorDown()
+        self:CheckFireStatus()
+        self:IdleElefX()
+        self:AllowedToEatGibs()
+    end
+
+    if self.VJ_IsBeingControlled then
+        self:CustomOnPlyJump()  
+    end
 end
 
+ENT.AllowedToEatGibs = true 
+function ENT:AllowedToEatGibs()
+    if not IsValid(self) or self:IsOnFire() or self.MovementType == VJ_MOVETYPE_STATIONARY or self.Medic_Status or self.Flinching or self.IsFollowing or self:GetState() == VJ_STATE_ONLY_ANIMATION or self:IsBusy() or self.Alerted or not self.AllowedToEatGibs then 
+        return 
+    end
+
+    local maxHealth = self:GetMaxHealth()
+    local currentHealth = self:Health()
+    local healAmountMin, healAmountMax = 25, 70
+    local distThresholdMin, distThresholdMax = 20, 250
+    local searchRadius = 1550
+    local healAmount = math.random(healAmountMin, healAmountMax)
+    local nearbyGibs = ents.FindInSphere(self:GetPos(), searchRadius)
+
+    for _, gib in ipairs(nearbyGibs) do
+        if not IsValid(gib) or not gib:GetClass():find("obj_vj_gib") then
+            continue
+        end
+        local dist = self:GetPos():Distance(gib:GetPos())
+        if (currentHealth / maxHealth) < 0.99 and not IsValid(self:GetEnemy()) and not self:IsBusy() and dist < distThresholdMax then
+            if dist > distThresholdMin then
+                self:SetLastPosition(gib:GetPos())
+                self:VJ_TASK_GOTO_LASTPOS("TASK_WALK_PATH")
+                return
+            end
+            if dist <= distThresholdMin then
+                self:VJ_ACT_PLAYACTIVITY(ACT_MELEE_ATTACK1, true, false, false)
+                VJ_EmitSound(self, "wrhf/gibs/fullbodygib-2.wav")
+                self:SetHealth(math.Clamp(currentHealth + healAmount, 0, maxHealth))
+                local effectData = EffectData()
+                effectData:SetOrigin(gib:GetPos() + gib:OBBCenter())
+                effectData:SetColor(VJ_Color2Byte(Color(130, 19, 10)))
+                effectData:SetScale(math.random(25,75))
+                util.Effect("VJ_Blood1", effectData)
+
+                effectData:SetScale(2)
+                effectData:SetFlags(3)
+                effectData:SetColor(0)
+                util.Effect("bloodspray", effectData)
+                gib:Remove()
+            end
+        end
+    end
+end
 
 function ENT:IdleElefX()
     if math.random(1, 6) == 2 and IsValid(self) and self.ElectricGonome then
@@ -789,9 +853,6 @@ function ENT:Controller_IntMsg(ply)
 end
 	
 function ENT:CustomOnThink()
-	if self.VJ_IsBeingControlled then
-	self:CustomOnPlyJump()   
-	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 	-- ====== Sound File Paths ====== --
@@ -801,7 +862,8 @@ ENT.SoundTbl_BeforeMeleeAttack = {"npc/zombie/zo_attack1.wav","npc/zombie/zo_att
 ENT.SoundTbl_FootStep = {"gonome/gonome_step1.wav","gonome/gonome_step2.wav","gonome/gonome_step3.wav","gonome/gonome_step4.wav","gonome/gonome_run.wav"}
 ENT.SoundTbl_Idle = {"npc/zombie/zombie_voice_idle1.wav","npc/zombie/zombie_voice_idle2.wav","npc/zombie/zombie_voice_idle3.wav","npc/zombie/zombie_voice_idle4.wav","npc/zombie/zombie_voice_idle5.wav","npc/zombie/zombie_voice_idle6.wav","npc/zombie/zombie_voice_idle7.wav","npc/zombie/zombie_voice_idle8.wav","npc/zombie/zombie_voice_idle9.wav","npc/zombie/zombie_voice_idle10.wav","npc/zombie/zombie_voice_idle11.wav","npc/zombie/zombie_voice_idle12.wav","npc/zombie/zombie_voice_idle13.wav","npc/zombie/zombie_voice_idle14.wav","gonome/gonome_idle1.wav","gonome/gonome_idle2.wav","gonome/gonome_idle3.wav"}
 ENT.SoundTbl_MeleeAttack = {"gonome/gonome_melee1.wav","gonome/gonome_melee2.wav","gonome_pl_fallpain1","gonome/pl_burnpain"}
-ENT.SoundTbl_MeleeAttackMiss = {"snpc/halflife2betaxenians/betazombie/claw_miss1.wav","snpc/halflife2betaxenians/betazombie/claw_miss2.wav","snpc/halflife2betaxenians/betazombie/zombie_swing.wav"}
+ENT.SoundTbl_MeleeAttackMiss = {"npc/zombie/claw_miss1.wav","npc/zombie/claw_miss2.wav"}
+ENT.SoundTbl_MeleeAttackExtra = {"npc/zombie/claw_strike1.wav","npc/zombie/claw_strike2.wav","npc/zombie/claw_strike3.wav"}
 ENT.SoundTbl_Pain = {"npc/zombie/zombie_pain1.wav","npc/zombie/zombie_pain2.wav","npc/zombie/zombie_pain3.wav","npc/zombie/zombie_pain4.wav","npc/zombie/zombie_pain5.wav","npc/zombie/zombie_pain6.wav","gonome/gonome_pain1.wav","gonome/gonome_pain2.wav","gonome/gonome_pain3.wav","gonome/gonome_pain4.wav"}
 ENT.SoundTbl_Death = {"gonome/gonome_death2.wav","gonome/gonome_death3.wav","gonome/gonome_death4.wav"}
 ENT.SoundTbl_BeforeRangeAttack = {"physics/body/body_medium_break2.wav"}
@@ -927,7 +989,67 @@ function ENT:PerformGibbing()
     end
 end
 
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:CustomOnEat(status, statusInfo)
+    if status == "CheckFood" then
+        return true 
+    elseif status == "BeginEating" then
+        VJ_EmitSound(self, "barnacle/bcl_chew2.wav", 65)
+        self:SetIdleAnimation({"victoryeat1"}, true, false, false)
+        return self:VJ_ACT_PLAYACTIVITY(ACT_BIG_FLINCH, true, false)
+    elseif status == "Eat" then
+        local randomNum = math.random(1, 15)
+        if randomNum <= 3 then
+            local gibType = "UseHuman_Small"
+            if randomNum == 3 then
+                gibType = "UseHuman_Big"
+            end
+            local food = self.EatingData.Ent
+            local gibPos = food:GetPos() + food:OBBCenter() + Vector(0, 0, 10) 
+            self:CreateGibEntity("obj_vj_gib", gibType, { Pos = gibPos })
+            VJ_EmitSound(self, "wrhf/gibs/fullbodygib-3.wav", 100, 100)
+        end
 
+        VJ_EmitSound(self, "barnacle/barnacle_crunch3.wav", 65, 100)
+        VJ_EmitSound(self, "barnacle/barnacle_crunch2.wav", 55, 100)
+
+        local food = self.EatingData.Ent
+        local damage = math.random(65,95)
+        local foodHP = food:Health() 
+        local newHealth = self:Health() + math.min(damage, foodHP)
+        self:SetHealth(newHealth)
+
+        /*if foodHP <= 0 then
+            food:Remove() 
+        end*/
+
+        local bloodData = food.BloodData
+        if bloodData then
+            local bloodPos = food:GetPos() + food:OBBCenter()
+            local bloodParticle = "blood_zombie_split_spray"
+            if bloodParticle then
+                ParticleEffect(bloodParticle, bloodPos, self:GetAngles())
+            end
+        end
+
+        local vomitParticle = "vomit_barnacle_b"
+        if vomitParticle then
+            if self:LookupAttachment("0") then
+                ParticleEffectAttach(vomitParticle, PATTACH_POINT_FOLLOW, self, self:LookupAttachment("0"))
+            end
+            if self:LookupAttachment("0") then
+                ParticleEffectAttach(vomitParticle, PATTACH_POINT_FOLLOW, self, self:LookupAttachment("0"))
+            end
+        end
+
+        return 2 
+    elseif status == "StopEating" then
+        if statusInfo ~= "Dead" and self.EatingData.AnimStatus ~= "None" then
+            return self:VJ_ACT_PLAYACTIVITY(ACT_BIG_FLINCH, true, false)
+        end
+    end
+    return 0
+end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ENT.FootStepPitch1 = 75
 ENT.FootStepPitch2 = 100

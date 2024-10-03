@@ -56,6 +56,7 @@ if VJExists == true then
 	AddConvars["vj_can_gonomes_have_worldshake"] = 1 -- Do Gonome's have worldshake?
 	AddConvars["vj_can_gonomes_break_doors"] = 1 -- Do Gonome's break doors?
 	AddConvars["vj_can_gonomes_be_gibbed"] = 1 -- Can Gonome's be gibbed? 
+	//AddConvars["vj_can_gonomes_eat_rag"] = 1 -- Can Gonome's eat gibs or ragdolls? 
 	for k, v in pairs(AddConvars) do
 		if !ConVarExists( k ) then CreateConVar( k, v, {FCVAR_ARCHIVE} ) end
 	end

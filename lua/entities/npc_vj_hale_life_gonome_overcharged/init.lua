@@ -9,6 +9,7 @@ ENT.Model = "" -- The game will pick a random model from the table when the SNPC
 ENT.StartHealth = 500
 ENT.DeathAnimationChance = 2
 ENT.DeathAnimationTime = 1.7
+ENT.AnimTbl_Death = {"vjseq_dieforward","vjseq_diebackward","vjseq_diesimple","vjseq_dieheadshot_1","vjseq_dieheadshot_2"}
 ENT.AnimTbl_IdleStand = {"ACT_IDLE"}
 ENT.AnimTble_Run = {"ACT_RUN","ACT_RUN_2","ACT_RUN_3"}
 ENT.AnimTble_Walk = {"ACT_WALK","ACT_WALK_2","Walk_New"}
@@ -147,10 +148,6 @@ elseif GonomeModel == 2 then
 self:SetModel( Model("models/1_rnds_gonomes/overchraged_gonome/gonome_ov.mdl") )
 self:SetBodygroup(1,math.random(1,1))
 end
-
-if GetConVarNumber("vj_can_gonomes_have_worldshake") == 1 then
-self.HasWorldShakeOnMove = false
-end
 end
 
 ENT.HasMeleeAttack = true -- Should the SNPC have a melee attack?
@@ -191,10 +188,3 @@ ENT.SoundTbl_Pain = {"npc/zombie/zombie_pain1.wav","npc/zombie/zombie_pain2.wav"
 ENT.SoundTbl_Death = {"gonome/gonome_death2.wav","gonome/gonome_death3.wav","gonome/gonome_death4.wav"}
 ENT.SoundTbl_BeforeRangeAttack = {"npc/zombie/zombie_alert1.wav","npc/zombie/zombie_alert2.wav","npc/zombie/zombie_alert3.wav"}
 ENT.SoundTbl_Alert = {"npc/zombie/zombie_alert1.wav","npc/zombie/zombie_alert2.wav","npc/zombie/zombie_alert3.wav"}
----------------------------------------------------------------------------------------------------------------------------------------------
-
-/*-----------------------------------------------
-	*** Copyright (c) 2012-2017 by DrVrej, All rights reserved. ***
-	No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
-	without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
------------------------------------------------*/

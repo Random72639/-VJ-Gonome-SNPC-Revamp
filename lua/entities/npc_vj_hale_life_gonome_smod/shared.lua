@@ -1,4 +1,4 @@
-ENT.Base 			= "npc_vj_creature_base"
+ENT.Base 			= "npc_vj_hale_life_gonome"
 ENT.Type 			= "ai"
 ENT.PrintName 		= "Smod Gonome"
 ENT.Author 			= "Random72638"
