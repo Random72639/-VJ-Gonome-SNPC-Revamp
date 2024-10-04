@@ -365,15 +365,146 @@ function ENT:CustomOnMeleeAttack_BeforeStartTimer()
     end)
 end
 
-function ENT:CustomOnMeleeAttack_AfterChecks(v, isProp) 
+function ENT:CustomOnMeleeAttack_AfterChecks(hitEnt, isProp) 
+    if IsValid(self) && IsValid(hitEnt) then
+        if hitEnt:IsPlayer() or hitEnt:IsNPC() or hitEnt:IsNextBot() then
+            -- Particles that emit from hitEnt 
+            ParticleEffectAttach("antlion_gib_02_floaters",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
+            ParticleEffectAttach("blood_zombie_split",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
+            ParticleEffectAttach("vomit_barnacle",PATTACH_POINT_FOLLOW,hitEnt, hitEnt:EntIndex())
+            ParticleEffectAttach("blood_impact_red_01", PATTACH_ABSORIGIN_FOLLOW,hitEnt, hitEnt:EntIndex())
+        end
+    end
+
+    -- Gain health from enemy when hit
+    if IsValid(self) && IsValid(hitEnt) then
+        if hitEnt:IsPlayer() or hitEnt:IsNPC() or hitEnt:IsNextBot() then
+            local healthBonus = math.random(15,45) 
+            self:SetHealth(self:Health() + healthBonus)
+        end
+    end
+
+    -- Buffed melee damage against VJ Creatures
+    if hitEnt.IsVJBaseSNPC_Creature and IsValid(hitEnt) then
+        self.MeleeAttackDamage = math.random(7, 12) +  hitEnt:GetMaxHealth() * math.Rand(0.15,0.35)
+        //print("Calculated Melee Damage:", self.MeleeAttackDamage)
+        else
+        self.MeleeAttackDamage = self.MeleeAttackDamage
+    end
+
+    -- Set hitEnt on fire when self is on fire. 
+    if self:IsOnFire() && IsValid(self) && IsValid(hitEnt) then
+        hitEnt:Ignite(math.random(2,8))
+    end
+
+    if GetConVarNumber("vj_can_gonomes_knock_player_weapons") == 1 then 
+        if hitEnt:IsPlayer() && !hitEnt.Dead && IsValid(hitEnt:GetActiveWeapon()) && math.random(1, 3) == 1 then
+            local wep = hitEnt:GetActiveWeapon()
+            hitEnt:DropWeapon(wep)
+        end
+    end
+
+
+    local RandomRedFadeColour = math.random(54, 124)
+    if IsValid(self) and IsValid(hitEnt) then
+        self.WhiteFlashTriggered = false
+        self.NormalAttack = false
+
 if GetConVarNumber("vj_can_gonomes_screen_fx") == 1 then return false end 
-if v:IsPlayer() then
-local pitch = math.random(-100, 100)
-local yaw = math.random(-100, 100)
-v:ViewPunch(Angle(pitch, yaw, 5))
-v:ScreenFade(SCREENFADE.IN,Color(64,0,0),10,0)
-end
-return false
+    if hitEnt:IsPlayer() && !hitEnt:Alive() then
+        return false
+    end
+        
+        -- DSP Audio change, Screenshake, and viewpunch -- 
+        local RNGDSPSOUND = math.random(131, 133)
+        if hitEnt:IsPlayer() && IsValid(hitEnt) && !hitEnt.Dead && hitEnt:Alive() && math.random(1,3) == 1 then
+            local pitch = math.random(-155, 145)
+            local yaw = math.random(-155, 145)
+            hitEnt:ViewPunch(Angle(pitch, yaw, math.random(15, 45)))
+            util.ScreenShake(hitEnt:GetPos(), 25, 6, 6, math.random(3500, 5500))
+            hitEnt:SetLaggedMovementValue(0.5)
+            hitEnt:SendLua("RunConsoleCommand('pp_motionblur', '1')")
+            hitEnt:SendLua("RunConsoleCommand('pp_dof', '1')")
+            hitEnt:SetDSP(RNGDSPSOUND)
+            print("Dsp Equals " .. RNGDSPSOUND)
+
+            -- Store the player's default FOV if not already stored
+            if !hitEnt.DefaultFOV then
+                hitEnt.DefaultFOV = hitEnt:GetFOV()
+            end
+
+            -- Modify FOV here, clamped between 40 and 120
+            local initialFOV = hitEnt:GetFOV()
+            local fovChange = math.Rand(-65, 65)
+            local newFOV = math.Clamp(initialFOV + fovChange, 60, 120)
+            hitEnt:SetFOV(newFOV, 0.5) 
+
+            -- Screen tint effect
+            hitEnt:ScreenFade(SCREENFADE.IN, Color(255, 0, 0, 128), self.RedTintDuration, 0)
+
+            if math.random(1, 4) == 1 and not self.IsHeavyAttack and CurTime() > (self.HeavyAttackCooldown or 0) then
+                print("Heavy Attack!")
+                self.IsHeavyAttack = true
+                hitEnt:ViewPunch(Angle(pitch, yaw, math.random(55, 65)))
+                local pitch = math.random(-100, 225)
+                local yaw = math.random(-100, 225)
+                hitEnt:ScreenFade(SCREENFADE.IN, Color(255, 255, 255), math.random(5, 7), 2)
+                util.ScreenShake(hitEnt:GetPos(), math.random(15, 35), 5, 5, math.random(5899, 8000))
+                self.HeavyAttackCooldown = CurTime() + math.random(5, 15)
+            else
+                print("Normal Attack!")
+                self.NormalAttack = true
+                hitEnt:ScreenFade(SCREENFADE.IN, Color(RandomRedFadeColour, 0, 0), math.random(8, 12), 0)
+
+                -- Additional screen fade effect for both normal and heavy attacks -- 
+                if !self.WhiteFlashTriggered && CurTime() > (self.WhiteFlashCooldown or 0) then
+                    hitEnt:ScreenFade(SCREENFADE.IN, Color(255, 0, 0, 128), 0.95, 0)
+                    self.WhiteFlashTriggered = true
+                    self.WhiteFlashCooldown = CurTime() + math.random(12, 17)
+                end
+            end
+
+            local delay = math.random(7, 12)
+            if self.AttackTimer then
+                delay = delay + self.AttackTimer
+                timer.Remove("AttackTimer_" .. self:EntIndex())
+            end
+
+            timer.Create("AttackTimer_" .. self:EntIndex(), delay, 1, function()
+                if IsValid(hitEnt) and not hitEnt.Dead then
+                    hitEnt:SetLaggedMovementValue(1)
+                    hitEnt:SendLua("RunConsoleCommand('pp_motionblur', '0')")
+                    hitEnt:SendLua("RunConsoleCommand('pp_dof', '0')")
+                    hitEnt:SetDSP(0)
+
+                    if  !self.WhiteFlashTriggered and CurTime() > (self.WhiteFlashCooldown or 0) then
+                        hitEnt:ScreenFade(SCREENFADE.IN, Color(255, 255, 255), 0.95, 0)
+                        self.WhiteFlashTriggered = true
+                        self.WhiteFlashCooldown = CurTime() + math.random(12, 17)
+                    end
+
+                    -- Reset FOV back to the initial value
+                    hitEnt:SetFOV(hitEnt.DefaultFOV, 0.5)
+
+                    self.IsHeavyAttack = false 
+                    self.NormalAttack = false
+                    self.AttackTimer = nil
+                end
+            end)
+        end
+    end
+
+hook.Add("DoPlayerDeath", "ResetPlayerScreenFX", function(ply)
+    if IsValid(ply) then
+        ply:SetLaggedMovementValue(1)
+        ply:SendLua("RunConsoleCommand('pp_motionblur', '0')")
+        ply:SendLua("RunConsoleCommand('pp_dof', '0')")
+        ply:SetDSP(0)
+        ply:SetFOV(90, 0.5) 
+    end
+end)
+
+    return false
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------------

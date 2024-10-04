@@ -284,7 +284,7 @@ if GetConVarNumber("vj_can_gonomes_screen_fx") == 1 then return false end
         
         -- DSP Audio change, Screenshake, and viewpunch -- 
         local RNGDSPSOUND = math.random(131, 133)
-        if hitEnt:IsPlayer() && IsValid(hitEnt) && !hitEnt.Dead && hitEnt:Alive() then
+        if hitEnt:IsPlayer() && IsValid(hitEnt) && !hitEnt.Dead && hitEnt:Alive() && math.random(1,3) == 1 then
             local pitch = math.random(-155, 145)
             local yaw = math.random(-155, 145)
             hitEnt:ViewPunch(Angle(pitch, yaw, math.random(15, 45)))
