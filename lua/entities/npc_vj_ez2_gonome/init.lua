@@ -382,7 +382,7 @@ function ENT:CustomOnTakeDamage_BeforeDamage(dmginfo,hitgroup)
     if damage <= self.MinDmgCap and self.HasMinDmgCapAbility and math.random(1, 2) == 1 then
         dmginfo:SetDamage(0)
         self.MinDmgCapTriggered = true
-        print("Minimum damage cap triggered.")
+        //print("Minimum damage cap triggered.")
         timer.Simple(0.1, function()
             if IsValid(self) then 
                 self.MinDmgCapTriggered = false
