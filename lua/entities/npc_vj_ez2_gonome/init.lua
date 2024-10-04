@@ -438,7 +438,6 @@ self.MeleeAttackExtraTimers = {0.75,0.9,1}
 self.MeleeAttackDamageType = DMG_SLASH
 self.NextMeleeAttackTime = 0.5
 self.SoundTbl_MeleeAttack = {"gonome/gonome_melee1.wav","gonome/gonome_melee2.wav","gonome_pl_fallpain1","gonome/pl_burnpain"}
-self.SoundTbl_MeleeAttackMiss = {"snpc/halflife2betaxenians/betazombie/claw_miss1.wav","snpc/halflife2betaxenians/betazombie/claw_miss2.wav","snpc/halflife2betaxenians/betazombie/zombie_swing.wav"}
 elseif randAttack == 2 then
 self.AnimTbl_MeleeAttack = {"vjseq_attack1"}
 self.TimeUntilMeleeAttackDamage = 0.2
@@ -447,7 +446,6 @@ self.MeleeAttackExtraTimers = {0.8}
 self.HasExtraMeleeAttackSounds = true
 self.NextMeleeAttackTime = 0.5
 self.SoundTbl_MeleeAttack = {"gonome/gonome_melee1.wav","gonome/gonome_melee2.wav","gonome_pl_fallpain1","gonome/pl_burnpain"}
-self.SoundTbl_MeleeAttackMiss = {"snpc/halflife2betaxenians/betazombie/claw_miss1.wav","snpc/halflife2betaxenians/betazombie/claw_miss2.wav","snpc/halflife2betaxenians/betazombie/zombie_swing.wav"}
 self.MeleeAttackDamageType = DMG_SLASH
 end
 end
